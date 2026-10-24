@@ -1,0 +1,135 @@
+% Appendix: training-log excerpts, full run list and hyperparameters (generated from the run outputs)
+\clearpage
+\onecolumn
+\appendix
+
+\section{Training-log excerpts}
+\label{sec:logs}
+
+The project asks for the training time and VRAM to be documented with training logs.
+Below are excerpts of \texttt{train\_log.txt} for our two final models; the full logs (every 100 steps) are available on request.
+Dates are removed from the timestamps, Google Drive paths are shortened, and long lines are wrapped.
+GPU-hours include head initialization (feature extraction), training and per-epoch holdout evaluation (\cref{sec:budget}).
+
+\paragraph{Final full fine-tuning model} (prototype head, all 45 images per class, 8 epochs, flip TTA at prediction):
+{\scriptsize
+\begin{verbatim}
+========== 1019_1319_1_full ==========
+[13:32:14] full: lr 0.0001, head lr 0.0001, wd 0.05, layer decay 0.75, epochs 8, holdout 0/class,
+           head init proto, time budget 1.20 h
+[13:32:14] Environment: NVIDIA A100-SXM4-80GB (80 GB), bfloat16, 12 CPUs |
+           torch 2.11.0+cu130 (CUDA 13.0), timm 1.0.30, peft 0.21.1
+[13:38:32] Extracted features for 450,000 train / 0 holdout images in 6.1 min
+[13:38:32] Head initialized from proto (6.2 min incl. feature extraction, counted in this run's GPU time)
+[13:38:32] Trainable (excl. head): 85,798,656 = 100.000% of backbone | head 7,690,000 params (fine-tuned)
+[13:38:32] Training up to 8 epochs x 1757 steps (batch 256x1, warmup 1757 steps)
+[13:40:03] Speed 1146 img/s, 6.5 min/epoch
+[13:46:13] == epoch 1: train loss 3.4158, 13.8 min used
+[13:52:55] == epoch 2: train loss 2.6899, 20.5 min used
+[13:59:51] == epoch 3: train loss 2.3729, 27.4 min used
+[14:06:42] == epoch 4: train loss 2.1758, 34.2 min used
+[14:13:40] == epoch 5: train loss 2.0321, 41.1 min used
+[14:20:31] == epoch 6: train loss 1.9367, 47.9 min used
+[14:27:32] == epoch 7: train loss 1.8741, 54.9 min used
+[14:34:26] == epoch 8: train loss 1.8491, 61.8 min used
+[14:34:29] Training done: 14056 steps, 1.03 GPU-hours (budget 1.20 h)
+[14:34:29] Peak VRAM: 18.9 GB allocated, 20.1 GB reserved by PyTorch (GPU has 80 GB)
+[14:34:32] Inference latency (batch 1): 14.95 ms/img | throughput (batch 256): 1919 img/s |
+           NVIDIA A100-SXM4-80GB, bfloat16, with flip TTA
+[14:35:29] [val] 50,000 predictions over 9,992 classes (max 13 per class) ->
+           .../submission_val_1019_1319_1_full.zip
+\end{verbatim}
+}
+
+\paragraph{Final PEFT model} (LoRA on all linear layers, prototype head, 3 epochs, 2 images per class held out):
+{\scriptsize
+\begin{verbatim}
+========== 1019_1319_3_lora ==========
+[14:57:51] lora: lr 0.001, head lr 0.001, wd 0.0001, layer decay 1.0, epochs 3, holdout 2/class, head init proto,
+           time budget 1.20 h
+[14:57:51] Environment: NVIDIA A100-SXM4-80GB (80 GB), bfloat16, 12 CPUs |
+           torch 2.11.0+cu130 (CUDA 13.0), timm 1.0.30, peft 0.21.1
+[15:06:07] Extracted features for 430,000 train / 20,000 holdout images in 7.2 min
+[15:06:08] Prototype head (zero-shot, 0 trainable params): holdout top-1 44.01%
+[15:06:08] Head initialized from proto (7.2 min incl. feature extraction, counted in this run's GPU time)
+[15:07:15] Trainable (excl. head): 1,179,648 = 1.375% of backbone | head 7,690,000 params (fine-tuned)
+[15:07:15] Training up to 3 epochs x 1679 steps (batch 256x1, warmup 503 steps)
+[15:07:53] Speed 888 img/s, 8.1 min/epoch
+[15:15:44] == epoch 1: train loss 3.2174, holdout top-1 62.94%, 15.7 min used
+[15:24:12] == epoch 2: train loss 2.4125, holdout top-1 70.12%, 24.2 min used
+[15:32:40] == epoch 3: train loss 1.9496, holdout top-1 71.97%, 32.6 min used
+[15:32:41] Training done: 5037 steps, 0.54 GPU-hours (budget 1.20 h)
+[15:32:41] Peak VRAM: 19.9 GB allocated, 21.3 GB reserved by PyTorch (GPU has 80 GB)
+[15:33:00] Final holdout: top-1 71.98%, top-5 89.07%
+[15:33:03] Inference latency (batch 1): 7.61 ms/img | throughput (batch 256): 3869 img/s |
+           NVIDIA A100-SXM4-80GB, bfloat16, no flip TTA
+[15:33:55] [val] 50,000 predictions over 9,991 classes (max 15 per class) ->
+           .../submission_val_1019_1319_3_lora.zip
+\end{verbatim}
+}
+
+\section{All runs}
+\label{sec:all-runs}
+
+\begin{table}[h]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}lllrrrrrrr@{}}
+    \toprule
+    Run & Method & Head & Ep. & Trainable & Holdout & Val & GPU-h & GB & ms \\
+    \midrule
+    \run{0928\_0636\_1\_linear} & Zero-shot & prototype & 0 & 0 & 43.95 & -- & 0.11 & 3.9 & 7.55 \\
+    \run{0928\_0636\_3\_full} & Full FT & LP & 3 & 100\% & 70.88 & -- & 0.45 & 18.9 & 7.31 \\
+    \run{0928\_0748\_1\_full} & Full FT & LP & 8 & 100\% & 72.31 & 72.57/72.84$^\ddagger$ & 1.03 & 18.9 & 7.35 \\
+    \run{1018\_2306\_1\_full} & Full FT, all data & LP & 8 & 100\% & -- & 73.10$^\ddagger$ & 1.03 & 18.9 & 14.92$^\ddagger$ \\
+    \run{1019\_1120\_1\_full} & Full FT & prototype & 3 & 100\% & 73.38 & -- & 0.48 & 18.9 & 7.78 \\
+    \run{1019\_1319\_2\_full} & Full FT, all data & prototype & 3 & 100\% & -- & 74.01$^\ddagger$ & 0.44 & 18.9 & 15.24$^\ddagger$ \\
+    \run{1019\_1319\_1\_full} & \textbf{Full FT, all data (final)} & prototype & 8 & 100\% & -- & \textbf{76.22}$^\ddagger$ & 1.03 & 18.9 & 14.95$^\ddagger$ \\
+    \midrule
+    \run{0928\_0636\_2\_lora} & LoRA qkv & LP & 3 & 0.344\% & 68.57 & -- & 0.40 & 13.5 & 7.22 \\
+    \run{0928\_0748\_2\_lora} & LoRA qkv, head lr $2{\times}10^{-4}$ & LP & 10 & 0.344\% & 68.69 & -- & 1.06 & 13.5 & 7.53 \\
+    \run{1018\_1239\_1\_lora} & LoRA qkv, lr $5{\times}10^{-4}$ & LP & 3 & 0.344\% & 68.45 & -- & 0.41 & 13.5 & 7.15 \\
+    \run{1018\_1239\_3\_adaptformer} & AdaptFormer & LP & 3 & 1.387\% & 69.05 & -- & 0.39 & 12.8 & 9.89 \\
+    \run{1018\_1239\_2\_lora} & LoRA all & LP & 3 & 1.375\% & 69.45 & -- & 0.55 & 19.9 & 7.03 \\
+    \run{1018\_2306\_2\_lora} & LoRA all & LP & 6 & 1.375\% & 69.87 & -- & 0.97 & 19.9 & 7.31 \\
+    \run{1019\_0953\_1\_lora}$^*$ & LoRA all & random & 3 & 1.375\% & 71.95 & -- & 0.37$^*$ & 19.9 & 1.81$^*$ \\
+    \run{1019\_0953\_2\_lora}$^*$ & LoRA all & prototype & 3 & 1.375\% & 72.00 & -- & 0.44$^*$ & 19.9 & 1.82$^*$ \\
+    \run{1019\_1120\_2\_lora} & LoRA all & prototype & 6 & 1.375\% & 71.52 & -- & 0.97 & 19.9 & 7.76 \\
+    \run{1019\_1319\_3\_lora} & \textbf{LoRA all (final PEFT)} & prototype & 3 & 1.375\% & \textbf{71.98} & \textbf{71.90} & 0.54 & 19.9 & 7.61 \\
+    \bottomrule
+  \end{tabular}
+  \caption{\textbf{All 17 runs.} Run IDs encode the batch start time (month, day, hour, minute) and the position in the batch.
+  LoRA all: LoRA on all linear layers. Trainable: backbone parameters excluding the 7.69M head. GB: peak allocated memory during training. ms: batch-1 latency.
+  $^\ddagger$Predicted with flip TTA. $^*$Run on an RTX PRO 6000 Blackwell; all other runs on an A100-SXM4-80GB (speed and latency are not comparable across the two).
+  The linear-probe head (62.07\% holdout) is computed inside every LP run and has no separate run.}
+  \label{tab:all-runs}
+\end{table}
+
+\section{Hyperparameters}
+\label{sec:hparams}
+
+\begin{table}[h]
+  \centering
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{@{}p{2.2cm}p{3.5cm}p{3.5cm}p{3.5cm}p{3.0cm}@{}}
+    \toprule
+    & Full fine-tuning & LoRA & AdaptFormer & Linear-probe head \\
+    \midrule
+    Trainable & all weights + head & $A, B$ in qkv, proj, fc1, fc2 (all 12 blocks) + head & parallel MLP adapters + head & head only, on cached features \\
+    Method-specific & layer-wise lr decay 0.75, drop path 0.1 & $r=8$, $\alpha=16$, no dropout, merged after training & bottleneck 64, scale 0.1, dropout 0.1 & initialized from the prototype head \\
+    Optimizer & AdamW & AdamW & AdamW & AdamW \\
+    Learning rate & $10^{-4}$ (head $10^{-4}$) & $10^{-3}$ (head $10^{-3}$) & $10^{-3}$ (head $10^{-3}$) & $10^{-3}$ \\
+    Weight decay & 0.05 & $10^{-4}$ & $10^{-4}$ & $10^{-4}$ \\
+    Schedule & \multicolumn{3}{p{11.3cm}}{linear warmup (1 epoch; 0.3 epochs for 3-epoch runs), then cosine decay to 0} & cosine, no warmup \\
+    Epochs & 3 or 8 & 3, 6 or 10 & 3 & 10 \\
+    Batch size & 256 & 256 & 256 & 4,096 \\
+    Precision & bf16 & bf16 & bf16 & fp32 head, fp16 features \\
+    Regularization & \multicolumn{3}{p{11.3cm}}{label smoothing 0.1, gradient clipping at norm 1.0} & label smoothing 0.1 \\
+    Augmentation & \multicolumn{3}{p{11.3cm}}{RandomResizedCrop (scale 0.25--1) + horizontal flip} & none (center crops) \\
+    \bottomrule
+  \end{tabular}
+  \caption{\textbf{Hyperparameters.} Weight decay is not applied to biases, normalization parameters, the class token and position embeddings. Evaluation resizes to 248 pixels and takes a 224 center crop.}
+  \label{tab:hparams}
+\end{table}

@@ -1,0 +1,25 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Vision Transformers and transfer learning.}
+ViT~\cite{dosovitskiy2021vit} applies a Transformer~\cite{vaswani2017attention} to a sequence of $16 \times 16$ image patches.
+Supervised pretraining on ImageNet-21k~\cite{deng2009imagenet} with strong augmentation and regularization (AugReg~\cite{steiner2022augreg}) produces backbones that transfer well.
+We use the AugReg ViT-B/16 checkpoint from timm~\cite{wightman2019timm} that was further fine-tuned on ImageNet-1k.
+Better ImageNet models also transfer better, under both linear evaluation and fine-tuning~\cite{kornblith2019better}.
+Standard fine-tuning recipes use AdamW~\cite{loshchilov2019adamw}, warmup with cosine decay~\cite{loshchilov2017sgdr}, label smoothing~\cite{szegedy2016rethinking}, stochastic depth~\cite{huang2016stochastic} and layer-wise learning-rate decay~\cite{bao2022beit}; our full fine-tuning baseline follows this practice.
+
+\paragraph{Parameter-efficient fine-tuning (PEFT).}
+Adapters insert small bottleneck MLPs into every Transformer block~\cite{houlsby2019adapter}.
+AdaptFormer~\cite{chen2022adaptformer} instead adds a scaled bottleneck branch \emph{in parallel} to the MLP of each ViT block.
+LoRA~\cite{hu2022lora} learns a low-rank update $\Delta W = BA$ to frozen weight matrices, which can be merged into the weights after training.
+VPT~\cite{jia2022vpt} prepends learnable prompt tokens, and BitFit~\cite{benzaken2022bitfit} trains only the bias terms.
+We implement LoRA with the PEFT library~\cite{mangrulkar2022peft} and compare it with AdaptFormer.
+
+\paragraph{Initializing the classifier head.}
+When a pretrained model is transferred to new classes, the head is usually re-initialized; ViT zero-initializes it~\cite{dosovitskiy2021vit}.
+LP-FT~\cite{kumar2022lpft} argues that a randomly initialized head distorts pretrained features during fine-tuning.
+It therefore first fits a linear probe on frozen features and then fine-tunes everything.
+Prototype-based classifiers represent each class by the mean embedding of its examples, as in prototypical networks~\cite{snell2017prototypical}.
+Such normalized class means can be \emph{imprinted} directly as the weights of a cosine classifier~\cite{qi2018imprinted}.
+Our prototype head is an imprinted cosine classifier with a fitted temperature.
+We compare it with random and linear-probe initialization in a regime that is many-way (10,000 classes) and few-shot per class (45 images), with a short training budget.

@@ -1,0 +1,34 @@
+<section id="task" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">The task</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">One ViT, 10,000 classes, a fixed budget</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:36px;border-radius:20px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;line-height:1.1;color:#2A78D6">10,000</p>
+<p style="font-size:30px;line-height:1.35;color:#4A5563">fine-grained classes in an anonymized dataset</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:36px;border-radius:20px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;line-height:1.1;color:#2A78D6">45</p>
+<p style="font-size:30px;line-height:1.35;color:#4A5563">training images per class, 450,000 in total</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:36px;border-radius:20px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;line-height:1.1;color:#2A78D6">1.2 h</p>
+<p style="font-size:30px;line-height:1.35;color:#4A5563">per training run on one A100-80GB (the 2 h × 48 GB budget)</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:36px;border-radius:20px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;line-height:1.1;color:#2A78D6">&lt; 5%</p>
+<p style="font-size:30px;line-height:1.35;color:#4A5563">trainable parameters for the parameter-efficient track</p>
+</div>
+</div>
+<p style="font-size:30px;line-height:1.45;color:#4A5563">Base model: ViT-B/16, pretrained on ImageNet-21k and fine-tuned on ImageNet-1k (timm). Graded on top-1 accuracy, trainable parameters, inference latency and training GPU-hours.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06</p>
+<p style="font-size:24px;color:#6B7280">2</p>
+</div>
+<aside>The dataset has 10,000 fine-grained classes but only 45 training images per class, 450,000 images in total. So per class this is close to a few-shot problem.
+
+The backbone is fixed: ViT-B/16, pretrained on ImageNet-21k and fine-tuned on ImageNet-1k. Every training run must fit in 2 hours on 48 GB of GPU memory. We trained on one A100 with 80 GB, so we converted the budget to 96 GB-hours divided by 80 GB, which is 1.2 hours per run, counting head initialization, training and per-epoch evaluation.
+
+The parameter-efficient track should train less than 5% of the parameters. We report all four metrics the brief asks for: top-1 accuracy, trainable parameters, inference latency and training GPU-hours.</aside>
+</section>

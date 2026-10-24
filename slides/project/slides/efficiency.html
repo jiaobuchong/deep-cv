@@ -1,0 +1,32 @@
+<section id="efficiency" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Cost</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">What PEFT saves, and what it does not</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:40px;border-radius:20px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Saves: parameters and storage</h3>
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#2A78D6">1.375%</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">of the backbone is trained. The checkpoint is about 36 MB (31 MB of it is the head), against 374 MB for full fine-tuning.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:40px;border-radius:20px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Does not save: training time or memory</h3>
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#C2531F">885 img/s</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">for LoRA on all linear layers, against 1,131 img/s for full fine-tuning; peak memory 19.9 GB against 18.9 GB.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:40px;border-radius:20px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Merging matters at inference</h3>
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#C2531F">+35%</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">batch-1 latency for AdaptFormer (9.89 ms), which cannot be merged. Merged LoRA adds nothing (about 7.3 ms).</p>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06 · All measured on an A100-80GB, bf16</p>
+<p style="font-size:24px;color:#6B7280">13</p>
+</div>
+<aside>A practical lesson about cost. What PEFT clearly saves is trainable parameters and storage: 1.375% of the backbone, and a checkpoint of about 36 MB, most of which is the 10,000-class head, against 374 MB for full fine-tuning.
+
+What it did not save in our runs is training time or memory. Gradients still flow back through the whole frozen backbone, and the extra LoRA branches add work, so LoRA on all linear layers trained at 885 images per second against 1,131 for full fine-tuning, with slightly more peak memory.
+
+At inference, merging is what matters. LoRA merges into the weights and costs nothing extra. AdaptFormer cannot be merged and is about 35% slower at batch size 1.</aside>
+</section>

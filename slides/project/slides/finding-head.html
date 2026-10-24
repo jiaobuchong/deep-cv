@@ -1,0 +1,31 @@
+<section id="finding-head" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Finding 1</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">Prototype heads beat linear-probe heads by 2.5 to 3.1 points</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#E7F0FB;padding:40px;border-radius:20px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1.1;color:#2A78D6">+2.5</p>
+<h3 style="font-size:30px;font-weight:700;line-height:1.25;color:#15202B">Full fine-tuning, 3 epochs</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">lp 70.88% → proto 73.38% (holdout)</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#E7F0FB;padding:40px;border-radius:20px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1.1;color:#2A78D6">+2.5</p>
+<h3 style="font-size:30px;font-weight:700;line-height:1.25;color:#15202B">LoRA on all linear layers, 3 epochs</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">lp 69.45% → proto 71.98% (holdout)</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#E7F0FB;padding:40px;border-radius:20px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1.1;color:#2A78D6">+3.1</p>
+<h3 style="font-size:30px;font-weight:700;line-height:1.25;color:#15202B">Full fine-tuning, 8 epochs, all data, flip TTA</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">lp 73.10% → proto 76.22% (CodaBench val)</p>
+</div>
+</div>
+<p style="font-size:30px;line-height:1.45;color:#4A5563">Everything else is identical within each pair. A random head ends level with the prototype head (71.95% vs 72.00%, LoRA, 3 epochs) but converges more slowly, so only the linear-probe head hurts.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06 · lp = linear-probe head, proto = prototype head</p>
+<p style="font-size:24px;color:#6B7280">6</p>
+</div>
+<aside>This is our main finding. In every pair, with everything else identical, the prototype head beats the linear-probe head. Full fine-tuning for 3 epochs: plus 2.5 points on holdout. LoRA on all linear layers for 3 epochs: plus 2.5 points. And our final setting, full fine-tuning for 8 epochs on all data with flip TTA: plus 3.1 points on CodaBench, from 73.10% to 76.22%.
+
+We also tried a random head. It ends level with the prototype head, 71.95% against 72.00%, but learns more slowly in the first epochs. So the problem is specifically the linear-probe head.</aside>
+</section>

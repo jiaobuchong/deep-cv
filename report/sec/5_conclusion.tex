@@ -1,0 +1,24 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We adapted ViT-B/16 to a 10,000-class fine-grained benchmark with 45 images per class within a budget of 96\,GB$\cdot$h per run.
+The largest gain came from the least glamorous component.
+Initializing the 10,000-way head with imprinted class prototypes instead of a linear probe fitted on the training features improved accuracy by 2.5--3.1 points, for both full fine-tuning and LoRA.
+With this head, full fine-tuning reaches 76.22\% on the CodaBench validation set in 1.03 GPU-hours.
+LoRA on all linear layers reaches 71.90\% while training 1.375\% of the backbone.
+After merging, LoRA has zero inference overhead.
+For PEFT under this budget, three choices mattered:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt]
+    \item where the adaptation capacity goes (all linear layers, not only attention);
+    \item whether the update can be merged (LoRA \vs AdaptFormer);
+    \item a short schedule (about 3 epochs).
+\end{itemize}
+
+\paragraph{Limitations.}
+Every configuration was trained once (seed 0), and the holdout split has a noise level of about $\pm$0.3 points, so small differences such as the 0.26-point gain from the two extra images per class should be read with care.
+The dataset is anonymized, so we cannot relate our findings to its domain.
+One ablation batch ran on a different GPU; its accuracies are comparable, as checked by repeating one run, but its speeds and latencies are not.
+Our explanation of why the linear-probe head hurts is consistent with the loss curves but is not a controlled proof.
+We did not explore higher input resolution, other PEFT families such as VPT or BitFit, or larger budgets.
+\todo{Phase 2: report the CodaBench test accuracy of the final models.}
+\todo{Check the course page limit (the CVPR limit is 8 pages excluding references).}

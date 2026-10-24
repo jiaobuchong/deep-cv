@@ -1,0 +1,23 @@
+<section id="why-lp" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Finding 1 · why</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">The linear-probe head has already fit the training set</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<div style="width:560px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:28px;line-height:1.4;color:#4A5563"><b>Weak signal.</b> It was trained on frozen features of the same training images, so the first training loss is low (2.29 vs 4.39 with prototypes, LoRA) and little gradient reaches the backbone.</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563"><b>Then a mismatch.</b> Once the features move, the fitted head no longer fits: with LoRA the training loss rose from 2.22 to 2.69 in epoch 1.</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563"><b>Prototypes generalize.</b> Higher training loss (1.85 vs 1.77), yet +3.1 points on CodaBench.</p>
+</div>
+<img src="/_blob/f3500f33d3da5cb37a2cbb483b65e557" alt="Training loss over 8 epochs of full fine-tuning on all data. The prototype-head run starts near 5.0 and ends at 1.85; the linear-probe-head run starts near 2.8 and ends at 1.77. Both drop in steps at every epoch boundary. CodaBench: 76.22% with the prototype head, 73.10% with the linear-probe head." style="width:1056px;height:404px;object-fit:contain">
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06 · Chart: full fine-tuning, all data, 8 epochs</p>
+<p style="font-size:24px;color:#6B7280">8</p>
+</div>
+<aside>Why does the stronger start lose? Our explanation, consistent with the logs: the linear-probe head was trained on frozen features of the very same training images, so it already fits the training set. The training loss starts low, 2.29 against 4.39 for the prototype head in the LoRA runs, so only a weak gradient reaches the backbone and it learns less.
+
+Then, as soon as the backbone features move, the fitted head no longer matches them. With LoRA the training loss actually rose from 2.22 to 2.69 during the first epoch, and the holdout accuracy stalled.
+
+The chart shows full fine-tuning on all data. The prototype run keeps a higher training loss all the way, 1.85 against 1.77 in the last epoch, but it is 3.1 points better on CodaBench, so the linear-probe run is fitting the training images rather than learning general features. The step at every epoch boundary is the same memorization effect.</aside>
+</section>

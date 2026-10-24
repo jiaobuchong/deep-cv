@@ -1,0 +1,25 @@
+<section id="results" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Final models</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">Final results, all inside the compute budget</h2>
+</div>
+<table style="font-size:26px;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:31%;text-align:left">Model</th><th style="width:12%;text-align:right">CodaBench val</th><th style="width:9%;text-align:right">Test</th><th style="width:11%;text-align:right">Trainable</th><th style="width:13%;text-align:right">Latency bs1</th><th style="width:12%;text-align:right">GPU-hours</th><th style="width:12%;text-align:right">Peak VRAM</th></tr>
+<tr><td style="text-align:left">Reference: full fine-tuning</td><td style="text-align:right">70.8%</td><td style="text-align:right">–</td><td style="text-align:right">100%</td><td style="text-align:right">–</td><td style="text-align:right">–</td><td style="text-align:right">–</td></tr>
+<tr><td style="text-align:left">Reference: LoRA</td><td style="text-align:right">68.3%</td><td style="text-align:right">–</td><td style="text-align:right">0.34%</td><td style="text-align:right">–</td><td style="text-align:right">–</td><td style="text-align:right">–</td></tr>
+<tr style="background:#E7F0FB"><td style="text-align:left"><b>Ours: full fine-tuning, proto head, 8 epochs, all data, flip TTA</b></td><td style="text-align:right"><b>76.22%</b></td><td style="text-align:right">[__%]</td><td style="text-align:right">100%</td><td style="text-align:right">14.95 ms *</td><td style="text-align:right">1.03 h</td><td style="text-align:right">18.9 GB</td></tr>
+<tr style="background:#E7F0FB"><td style="text-align:left"><b>Ours: LoRA on all linear layers, proto head, 3 epochs</b></td><td style="text-align:right"><b>71.90%</b></td><td style="text-align:right">[__%]</td><td style="text-align:right">1.375%</td><td style="text-align:right">7.61 ms</td><td style="text-align:right">0.54 h</td><td style="text-align:right">19.9 GB</td></tr>
+</table>
+<p style="font-size:26px;line-height:1.45;color:#4A5563">* Flip TTA runs two forward passes per image; without it the same model takes 7.35 ms. Budget per run: 1.2 GPU-hours on an A100-80GB (2 h × 48 GB) and 48 GB of memory. Latency: batch 1, bf16, forward pass only. Test accuracy is added after Phase 2 (6 November).</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06 · Trainable = share of the 85.8M-parameter backbone; the 7.69M-parameter head is extra</p>
+<p style="font-size:24px;color:#6B7280">12</p>
+</div>
+<aside>Here are the two final models side by side with the references, on all the metrics the brief asks for.
+
+Full fine-tuning with the prototype head, 8 epochs, all data and flip TTA reaches 76.22% on CodaBench val, 5.4 points above the reference, using 1.03 of the 1.2 allowed GPU-hours and 18.9 GB of memory. Its latency is 14.95 ms per image because of the two TTA passes; without TTA it is 7.35 ms.
+
+Our LoRA model trains only 1.375% of the backbone and reaches 71.90%, 3.6 points above the reference LoRA, in 0.54 GPU-hours. After merging, its latency equals the base model.
+
+The test-set column will be filled in after Phase 2.</aside>
+</section>

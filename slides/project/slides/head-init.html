@@ -1,0 +1,38 @@
+<section id="head-init" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Key design choice</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">Three ways to start the 10,000-class head</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:40px;border-radius:20px;border-top:8px solid #9AA1AB">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Random</h3>
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#6B7280">≈ 0%</p>
+<p style="font-size:24px;color:#6B7280">head-only accuracy before training</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">Small random weights (the timm default). The head starts with no class knowledge.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#E7F0FB;padding:40px;border-radius:20px;border-top:8px solid #2A78D6">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Prototype (ours)</h3>
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#2A78D6">44.0%</p>
+<p style="font-size:24px;color:#4A5563">head-only accuracy before training</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">Normalized class-mean features × temperature. No training, about 6 minutes of feature extraction.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F1EFEA;padding:40px;border-radius:20px;border-top:8px solid #EB6834">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Linear probe</h3>
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#C2531F">62.1%</p>
+<p style="font-size:24px;color:#6B7280">head-only accuracy before training</p>
+<p style="font-size:28px;line-height:1.4;color:#4A5563">The prototype head, then 10 epochs of training on the frozen features of the same training images.</p>
+</div>
+</div>
+<p style="font-size:32px;line-height:1.4;color:#15202B">Intuition says: start from the strongest head, the linear probe. <b>The experiments say otherwise.</b></p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06</p>
+<p style="font-size:24px;color:#6B7280">5</p>
+</div>
+<aside>The new head has 10,000 classes and 7.69 million parameters, so how we start it matters. We compared three options.
+
+Random: the timm default, small random weights, so the head knows nothing at the start.
+
+Prototype, our choice: each class weight is the normalized mean feature of that class, times a temperature. It needs no training and already gives 44% before any fine-tuning.
+
+Linear probe: we start from the prototypes and train only the head for 10 epochs on frozen features. It starts strongest, at 62%. This is the classic linear-probe-then-fine-tune recipe, and it was our first design. Intuition says the strongest starting head should win. The next slide shows it does not.</aside>
+</section>

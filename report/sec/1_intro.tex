@@ -1,0 +1,27 @@
+\section{Introduction}
+\label{sec:intro}
+
+Large pretrained Vision Transformers~\cite{dosovitskiy2021vit,steiner2022augreg} are rarely trained from scratch; they are adapted to new tasks, either by fine-tuning all weights or by training a small set of added parameters~\cite{houlsby2019adapter,hu2022lora,chen2022adaptformer}.
+In this project we adapt ViT-B/16 to an anonymized fine-grained classification benchmark with 10,000 classes.
+The training split has 450,000 images, exactly 45 per class; the validation split (50,000 images, 5 per class) and the test split (100,000 images, 10 per class) have hidden labels and are scored on CodaBench.
+Each training run may use at most 2 hours on 48\,GB of GPU memory (96\,GB$\cdot$h), and every method is reported with four metrics: top-1 accuracy, trainable parameters, inference latency and training GPU-hours.
+
+This setting differs from typical transfer-learning benchmarks in two ways.
+First, the classifier head is large and data-starved.
+A $10{,}000 \times 768$ linear head has 7.69M parameters: 9.0\% of the 85.8M-parameter backbone and 26$\times$ more than a rank-8 LoRA on the attention projections.
+Yet each of its rows is trained from only 43--45 images.
+Second, the budget is tight.
+One epoch of full fine-tuning takes about 6.5 minutes on an A100, so only about eight epochs fit into a run.
+
+These constraints raise three practical questions.
+(1)~How should the new head be initialized?
+(2)~Where should a parameter-efficient method spend its capacity?
+(3)~How should a fixed budget be split between epochs, data and test-time computation?
+We answer them with 17 controlled runs, each changing one setting at a time.
+We select models on a local holdout split that agrees with the CodaBench validation score to within 0.3 points.
+Our contributions are:
+\begin{itemize}[leftmargin=*,itemsep=1pt,topsep=2pt]
+    \item \textbf{Prototype head initialization.} The common linear-probe (LP) head, which LP-FT~\cite{kumar2022lpft} fits on frozen features before fine-tuning, is harmful in this regime. Imprinting class-mean prototypes~\cite{qi2018imprinted} instead improves accuracy by 2.5--3.1 points for both full fine-tuning and LoRA. Loss curves suggest why (\cref{sec:ablation-head}).
+    \item \textbf{An analysis of parameter-efficient adaptation under a budget.} Capacity matters more than the learning rate. LoRA on all linear layers (1.375\% of the backbone) beats LoRA on the attention projections alone by 0.88 points and reaches 98\% of full fine-tuning accuracy under the same settings. Merged LoRA adds no latency, whereas AdaptFormer adds about 35\%. Parameter-efficient training was \emph{not} faster or lighter in memory than full fine-tuning here.
+    \item \textbf{A budget-aware recipe with complete accounting.} We report accuracy, trainable parameters, latency, GPU-hours and peak memory for every run. Our final models reach 76.22\% (full fine-tuning, $+$5.4 over the reference) and 71.90\% (LoRA, $+$3.6 over the reference LoRA) on the CodaBench validation set.
+\end{itemize}

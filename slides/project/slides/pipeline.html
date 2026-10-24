@@ -1,0 +1,35 @@
+<section id="pipeline" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Our method</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">Our pipeline: prototype head, fine-tune, flip TTA</h2>
+</div>
+<div style="display:flex;align-items:center;gap:16px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#F1EFEA;padding:32px;border-radius:20px;border-top:8px solid #9AA1AB">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">1 · Extract features</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A5563">Run the frozen ViT-B/16 once over all training images and keep the 768-d CLS features.</p>
+</div>
+<x-connector head="end" style="width:56px;color:#6B7280;border-width:3px"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#E7F0FB;padding:32px;border-radius:20px;border-top:8px solid #2A78D6">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">2 · Prototype head</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A5563">Class weight = L2-normalized mean feature of the class × temperature 40. No gradient steps.</p>
+</div>
+<x-connector head="end" style="width:56px;color:#6B7280;border-width:3px"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#F1EFEA;padding:32px;border-radius:20px;border-top:8px solid #9AA1AB">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">3 · Fine-tune</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A5563">Full fine-tuning, or LoRA r = 8 on qkv, proj, fc1 and fc2 (1.375% of the backbone).</p>
+</div>
+<x-connector head="end" style="width:56px;color:#6B7280;border-width:3px"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#F1EFEA;padding:32px;border-radius:20px;border-top:8px solid #9AA1AB">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">4 · Predict</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A5563">Average the logits of each image and its horizontal flip (test-time augmentation).</p>
+</div>
+</div>
+<p style="font-size:30px;line-height:1.45;color:#4A5563">Every run is budget-aware: after 120 steps the measured speed sets how many steps fit in 1.2 GPU-hours, and the cosine learning-rate schedule is compressed to fit.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06</p>
+<p style="font-size:24px;color:#6B7280">4</p>
+</div>
+<aside>Here is the whole pipeline. Step one: we run the frozen backbone once over all training images and keep the 768-dimensional CLS features. Step two, the key design choice: each class's weight in the new 10,000-class head is the L2-normalized mean of its features, scaled by a temperature of 40. That takes no gradient steps at all. Step three: we fine-tune, either the whole network or LoRA with rank 8 on every linear layer of every block, which is 1.375% of the backbone. Step four: at prediction time we average the logits of the image and its horizontal flip.
+
+Every run is also budget-aware. After 120 steps we measure the speed, compute how many steps fit into 1.2 GPU-hours, and compress the cosine schedule if needed, so no run can exceed the budget.</aside>
+</section>

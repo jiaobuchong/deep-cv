@@ -1,0 +1,8 @@
+\begin{abstract}
+We adapt a ViT-B/16 pretrained on ImageNet-21k and fine-tuned on ImageNet-1k to an anonymized fine-grained benchmark with 10,000 classes and only 45 labeled images per class, under a budget of 2 hours on 48\,GB of GPU memory per training run.
+We compare full fine-tuning with parameter-efficient adaptation (LoRA and AdaptFormer) and find that the most important design decision is how the new 10,000-way classifier head is initialized.
+Initializing it with a linear probe fitted on frozen training features, a common way to avoid a random head, consistently hurts.
+Imprinting L2-normalized class-mean prototypes instead improves holdout accuracy by about 2.5 points for both full fine-tuning and LoRA, and the validation accuracy of our final model by 3.1 points under otherwise identical settings.
+Together with training on all images and horizontal-flip test-time augmentation, our final full fine-tuning model reaches 76.22\% top-1 accuracy on the CodaBench validation set (reference: 70.8\%) using 1.03 GPU-hours on one A100.
+Our best parameter-efficient model applies LoRA to every linear layer of the backbone, trains 1.375\% of its parameters, and reaches 71.90\% (reference LoRA: 68.3\%) with no inference overhead after the low-rank updates are merged.
+\end{abstract}

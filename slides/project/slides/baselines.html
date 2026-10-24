@@ -1,0 +1,22 @@
+<section id="baselines" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Starting point</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">We first reproduced the reference baselines</h2>
+</div>
+<table style="font-size:30px;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:46%;text-align:left">Method</th><th style="width:18%;text-align:right">Trainable params</th><th style="width:18%;text-align:right">Reference</th><th style="width:18%;text-align:right">Ours (holdout)</th></tr>
+<tr><td style="text-align:left">Zero-shot: prototype head, no training</td><td style="text-align:right">0%</td><td style="text-align:right">43.7%</td><td style="text-align:right">43.95%</td></tr>
+<tr><td style="text-align:left">Full fine-tuning, 3 epochs</td><td style="text-align:right">100%</td><td style="text-align:right">70.8%</td><td style="text-align:right">70.88%</td></tr>
+<tr><td style="text-align:left">LoRA r = 8 on qkv, 3 epochs</td><td style="text-align:right">0.34%</td><td style="text-align:right">68.3%</td><td style="text-align:right">68.57%</td></tr>
+</table>
+<div style="display:flex;flex-direction:column;gap:8px;background:#F1EFEA;padding:32px 40px;border-radius:20px">
+<p style="font-size:30px;line-height:1.45;color:#4A5563"><b>Holdout protocol.</b> We set aside 2 training images per class (20,000 images) as a local validation set. It tracks CodaBench val within 0.3 points (72.31% vs 72.57%; 71.98% vs 71.90%), so we judged every ablation on holdout and saved CodaBench submissions.</p>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06 · Reference = numbers reported by a PhD student in the project brief</p>
+<p style="font-size:24px;color:#6B7280">3</p>
+</div>
+<aside>Before trying anything new, we reproduced the three reference numbers from the brief. The zero-shot prototype head gives 43.95% against 43.7%, full fine-tuning for 3 epochs gives 70.88% against 70.8%, and LoRA with rank 8 on the attention qkv projection gives 68.57% against 68.3%. So our pipeline matches the reference.
+
+The validation labels are hidden, so we held out 2 training images per class, 20,000 images, as a local validation set. Holdout and CodaBench agree within 0.3 points on the two models we checked, so the ablations that follow are on holdout.</aside>
+</section>

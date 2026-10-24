@@ -1,0 +1,21 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-10-19T08:30:00Z"},
+  "lists": "css",
+  "title": "CS604 Team 06 — ViT Adaptation",
+  "cover": "cover",
+  "order": ["cover", "task", "baselines", "pipeline", "head-init", "finding-head", "curves", "why-lp", "peft-design", "training-length", "progression", "results", "efficiency", "takeaways", "thanks", "backup-impl"],
+  "sections": {
+    "s1": {"description": "The task, its constraints and the baselines we reproduced", "start": "cover"},
+    "s2": {"description": "Our pipeline and the choice of classifier-head initialization", "start": "pipeline"},
+    "s3": {"description": "What the ablations showed", "start": "finding-head"},
+    "s4": {"description": "Final results and what they cost", "start": "progression"},
+    "s5": {"description": "Takeaways, questions and backup material", "start": "takeaways"}
+  },
+  "faces": {
+    "source-serif-4": {"family": "Source Serif 4", "href": "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&display=swap"},
+    "ibm-plex-sans": {"family": "IBM Plex Sans", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"},
+    "ibm-plex-mono": {"family": "IBM Plex Mono", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"}
+  },
+  "designSystems": []
+}

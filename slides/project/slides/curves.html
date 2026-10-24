@@ -1,0 +1,17 @@
+<section id="curves" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Finding 1 · evidence</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">Linear-probe heads start high and finish low</h2>
+</div>
+<div style="display:flex;justify-content:center">
+<img src="/_blob/79d4ec3df326adfda70257ff9a76bbf8" alt="Line charts of holdout top-1 accuracy by epoch. Full fine-tuning: the linear-probe head goes from 62.1% before training to 70.9% after 3 epochs, the prototype head from 44.0% to 73.4%. LoRA on all linear layers: linear-probe head 62.1% to 69.6%, prototype head 44.0% to 72.0%." style="width:1360px;height:550px;object-fit:contain">
+</div>
+<p style="font-size:24px;line-height:1.4;color:#6B7280">Holdout top-1 after each epoch. “Head only” is the accuracy before any training. Left: full fine-tuning. Right: LoRA on all linear layers. Blue = prototype head, orange = linear-probe head.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06</p>
+<p style="font-size:24px;color:#6B7280">7</p>
+</div>
+<aside>Here are the learning curves behind that finding. The leftmost point is the head on its own, before any training: the linear-probe head, in orange, starts at 62%, far above the prototype head, in blue, at 44%.
+
+But after the first epoch the prototype run has caught up, and from then on it stays ahead. After 3 epochs it finishes 2.5 points higher for full fine-tuning on the left, and 2.5 points higher for LoRA on the right. With LoRA the linear-probe run even stalls in the first epoch: holdout stays at 62%.</aside>
+</section>

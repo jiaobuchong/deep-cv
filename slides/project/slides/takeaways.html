@@ -1,0 +1,26 @@
+<section id="takeaways" data-transition="fade" style="background:#15202B;color:#F5F3EE;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<p style="font-size:28px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#7FB2F0">Takeaways</p>
+<div style="display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;gap:32px;align-items:baseline">
+<p style="width:72px;font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;color:#7FB2F0">1</p>
+<p style="flex:1;font-size:40px;line-height:1.3;color:#F5F3EE">Start the 10,000-class head from class prototypes, not a linear probe: +2.5 to +3.1 points.</p>
+</div>
+<div style="display:flex;gap:32px;align-items:baseline">
+<p style="width:72px;font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;color:#7FB2F0">2</p>
+<p style="flex:1;font-size:40px;line-height:1.3;color:#F5F3EE">Give LoRA capacity in the MLP rather than a different learning rate: +0.88 points at 1.375% of the parameters.</p>
+</div>
+<div style="display:flex;gap:32px;align-items:baseline">
+<p style="width:72px;font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;color:#7FB2F0">3</p>
+<p style="flex:1;font-size:40px;line-height:1.3;color:#F5F3EE">Spend the whole budget on full fine-tuning; stop LoRA at about 3 epochs.</p>
+</div>
+<div style="display:flex;gap:32px;align-items:baseline">
+<p style="width:72px;font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;color:#F0915F">4</p>
+<p style="flex:1;font-size:40px;line-height:1.3;color:#F5F3EE">Result: 76.22% with full fine-tuning and 71.90% with LoRA on CodaBench val, both inside the budget.</p>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#9AA4B1">CS604 · Team 06</p>
+<p style="font-size:24px;color:#9AA4B1">14</p>
+</div>
+<aside>To sum up in four points. One: initialize the 10,000-class head from class prototypes, not from a linear probe; that alone is worth 2.5 to 3.1 points. Two: for LoRA, add capacity in the MLP rather than tuning the learning rate. Three: full fine-tuning should use the whole budget, while LoRA should stop at about 3 epochs. And four, the outcome: 76.22% with full fine-tuning and 71.90% with LoRA on CodaBench val, both well inside the compute budget.</aside>
+</section>

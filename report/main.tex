@@ -1,0 +1,48 @@
+% CS604 final report (Team 06), written with the CVPR 2026 author kit:
+% https://github.com/cvpr-org/author-kit (tag CVPR2026-v1(latex)).
+% Compile with pdfLaTeX + BibTeX (e.g. on Overleaf): pdflatex -> bibtex -> pdflatex -> pdflatex.
+
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+%%%%%%%%% PAPER TYPE
+% Camera-ready layout (no review ruler, authors shown), with page numbers for the course submission.
+\usepackage[pagenumbers]{cvpr}
+
+% Import additional packages in the preamble file, before hyperref
+\input{preamble}
+
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+
+%%%%%%%%% PAPER ID
+\def\paperID{06} % course team number; not a CVPR paper ID
+\def\confName{CVPR}
+\def\confYear{2026}
+
+%%%%%%%%% TITLE
+\title{Prototype-Initialized Adaptation of ViT-B/16 for 10,000-Class\\Fine-Grained Classification under a Fixed Compute Budget}
+
+%%%%%%%%% AUTHORS
+\author{\todo{Member 1 (student ID)} \qquad \todo{Member 2 (student ID)} \qquad \todo{Member 3 (student ID)}\\
+CS604 Team 06, Singapore Management University\\
+{\tt\small \todo{email addresses}}
+}
+
+\begin{document}
+\maketitle
+\input{sec/0_abstract}
+\input{sec/1_intro}
+\input{sec/2_related}
+\input{sec/3_method}
+\input{sec/4_experiments}
+\input{sec/5_conclusion}
+{
+    \small
+    \bibliographystyle{ieeenat_fullname}
+    \bibliography{refs}
+}
+
+% Appendix: training-log excerpts, full run list and hyperparameters
+\input{sec/X_appendix}
+
+\end{document}

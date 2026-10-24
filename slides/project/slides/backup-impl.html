@@ -1,0 +1,35 @@
+<section id="backup-impl" data-transition="fade" style="background:#FAF9F6;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F5FAD">Backup</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;line-height:1.1;color:#15202B">Implementation details and budget accounting</h2>
+</div>
+<div style="display:flex;gap:64px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Training</h3>
+<ul style="font-size:26px;line-height:1.4;color:#4A5563">
+<li>Backbone: timm vit_base_patch16_224.augreg2_in21k_ft_in1k (85.8M parameters); new 10,000-class head (7.69M)</li>
+<li>AdamW, warmup then cosine decay, bf16, batch 256, label smoothing 0.1, gradient clipping at 1.0</li>
+<li>Augmentation: RandomResizedCrop (area 0.25–1) and horizontal flip</li>
+<li>Full fine-tuning: LR 1e-4, weight decay 0.05, layer-wise LR decay 0.75, drop path 0.1</li>
+<li>LoRA: r = 8, α = 16, LR 1e-3, weight decay 1e-4, merged after training</li>
+<li>AdaptFormer: bottleneck 64, scale 0.1, parallel to the MLP</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.2;color:#15202B">Measurement</h3>
+<ul style="font-size:26px;line-height:1.4;color:#4A5563">
+<li>Budget: 96 GB·h ÷ 80 GB = 1.2 h per run on an A100-80GB (±10% allowed)</li>
+<li>Counted: head initialization with feature extraction, training, per-epoch holdout evaluation</li>
+<li>Not counted: unpacking data, saving checkpoints, final prediction</li>
+<li>Latency: random input, forward pass only, bf16, batch 1; about 3,850 img/s at batch 256</li>
+<li>Software: torch 2.11.0 (CUDA 13.0), timm 1.0.30, peft 0.21.1</li>
+<li>Hardware: A100-SXM4-80GB with 12 CPUs; one ablation batch ran on an RTX PRO 6000 and is used for accuracy only</li>
+</ul>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#6B7280">CS604 · Team 06</p>
+<p style="font-size:24px;color:#6B7280">16</p>
+</div>
+<aside>Backup slide for questions about implementation. Left: the training recipe for both methods. Right: how we measured. GPU time counts everything that uses the GPU for training, including the feature extraction for the prototype head, but not unpacking data, saving checkpoints or the final prediction. Latency is measured with random input, forward pass only, in bf16 at batch size 1. The software versions were logged from the later runs onward.</aside>
+</section>

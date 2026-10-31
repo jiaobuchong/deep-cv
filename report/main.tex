@@ -8,6 +8,16 @@
 % Camera-ready layout (no review ruler, authors shown), with page numbers for the course submission.
 \usepackage[pagenumbers]{cvpr}
 
+% XeLaTeX (e.g. tectonic) has no Unicode version of the template's Times fonts, so use the TeX Gyre clones
+% (same metrics as Times/Helvetica/Courier). pdfLaTeX, as on Overleaf, skips this and keeps the template's fonts.
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+  \setmainfont{texgyretermes}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+  \setsansfont{texgyreheros}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+  \setmonofont{texgyrecursor}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+\fi
+
 % Import additional packages in the preamble file, before hyperref
 \input{preamble}
 

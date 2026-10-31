@@ -1,6 +1,6 @@
 # CS604 期末报告（CVPR 2026 LaTeX 模板）
 
-报告基于 CVPR 2026 官方作者模板（[cvpr-org/author-kit](https://github.com/cvpr-org/author-kit)，tag `CVPR2026-v1(latex)`），用的是正式版（camera-ready）版式：不显示审稿行号，显示作者，带页码。本机没有 LaTeX 编译器，所以还没实际编译过；源文件已经用脚本检查过（见文末）。
+报告基于 CVPR 2026 官方作者模板（[cvpr-org/author-kit](https://github.com/cvpr-org/author-kit)，tag `CVPR2026-v1(latex)`），用的是正式版（camera-ready）版式：不显示审稿行号，显示作者，带页码。编译好的 PDF 是同目录下的 `main.pdf`（9 页：正文约 6.5 页 + 参考文献 + 2 页附录）。
 
 ## 在 Overleaf 上编译
 
@@ -10,7 +10,17 @@
    - **Compiler** 是 `pdfLaTeX`
 3. 点 **Recompile**。Overleaf 会自动依次运行 pdfLaTeX → BibTeX → pdfLaTeX，生成参考文献。
 
-如果在本地编译，依次运行：
+## 在本机编译
+
+本机已经用 Homebrew 装了 tectonic。改完 `.tex` 文件后，在 `report/` 目录下运行下面这条命令，就会重新生成 `main.pdf`（参考文献会自动处理）：
+
+```
+tectonic -X compile main.tex
+```
+
+tectonic 用的是 XeLaTeX 引擎，模板默认的 Times 字体在这个引擎下用不了，所以 `main.tex` 里加了一段只在 XeLaTeX 下生效的代码，改用 Times 的克隆字体 TeX Gyre Termes（字宽相同）。用 Overleaf 的 pdfLaTeX 编译时，这段会被自动跳过。
+
+如果装的是完整的 TeX Live / MacTeX，也可以用 pdfLaTeX，依次运行：
 
 ```
 pdflatex main
@@ -53,12 +63,6 @@ pdflatex main
 
 ## 已做的检查
 
-没有编译器，所以用 Python 脚本做了静态检查，结果都通过了：
-
-- `\begin` / `\end` 环境成对
-- 所有 `\cite` 的 key 都在 `refs.bib` 里
-- 所有 `\ref` / `\cref` 都有对应的 `\label`
-- 所有图片和 `\input` 文件都存在
-- 正文里没有未转义的 `%`、`&`、`_`，也没有非 ASCII 字符
-
-表格宽度是按字符数估算的，第一次在 Overleaf 编译时，建议看一下有没有 overfull hbox 警告。
+- 用 tectonic 编译通过：没有未定义的引用或参考文献，没有超出版面（overfull）的警告，也没有缺字的警告。
+- 每一页都渲染成图片看过：图表都在版面内；附录 B、C 的标题和它们的表格在同一页（为此在附录 B 前加了换页）。
+- 编译前还用 Python 脚本做过静态检查：环境成对、`\cite` 的 key 都在 `refs.bib` 里、`\ref` 都有对应的 `\label`、图片和 `\input` 的文件都存在。

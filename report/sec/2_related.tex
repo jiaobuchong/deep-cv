@@ -13,7 +13,8 @@ Adapters insert small bottleneck MLPs into every Transformer block~\cite{houlsby
 AdaptFormer~\cite{chen2022adaptformer} instead adds a scaled bottleneck branch \emph{in parallel} to the MLP of each ViT block.
 LoRA~\cite{hu2022lora} learns a low-rank update $\Delta W = BA$ to frozen weight matrices, which can be merged into the weights after training.
 VPT~\cite{jia2022vpt} prepends learnable prompt tokens, and BitFit~\cite{benzaken2022bitfit} trains only the bias terms.
-We implement LoRA with the PEFT library~\cite{mangrulkar2022peft} and compare it with AdaptFormer.
+A classic alternative is to fine-tune only the top layers, whose features are the most task-specific~\cite{yosinski2014transferable}.
+We implement LoRA with the PEFT library~\cite{mangrulkar2022peft} and compare it with Adapter, AdaptFormer, BitFit and top-block fine-tuning under one protocol.
 
 \paragraph{Initializing the classifier head.}
 When a pretrained model is transferred to new classes, the head is usually re-initialized; ViT zero-initializes it~\cite{dosovitskiy2021vit}.

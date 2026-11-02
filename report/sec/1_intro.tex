@@ -15,13 +15,13 @@ One epoch of full fine-tuning takes about 6.5 minutes on an A100, so only about 
 
 These constraints raise three practical questions.
 (1)~How should the new head be initialized?
-(2)~Where should a parameter-efficient method spend its capacity?
+(2)~Which adaptation method should we use, and where should its trainable parameters go?
 (3)~How should a fixed budget be split between epochs, data and test-time computation?
-We answer them with 17 controlled runs, each changing one setting at a time.
+We answer them with 26 controlled runs, each changing one setting at a time.
 We select models on a local holdout split that agrees with the CodaBench validation score to within 0.3 points.
 Our contributions are:
 \begin{itemize}[leftmargin=*,itemsep=1pt,topsep=2pt]
-    \item \textbf{Prototype head initialization.} The common linear-probe (LP) head, which LP-FT~\cite{kumar2022lpft} fits on frozen features before fine-tuning, is harmful in this regime. Imprinting class-mean prototypes~\cite{qi2018imprinted} instead improves accuracy by 2.5--3.1 points for both full fine-tuning and LoRA. Loss curves suggest why (\cref{sec:ablation-head}).
-    \item \textbf{An analysis of parameter-efficient adaptation under a budget.} Capacity matters more than the learning rate. LoRA on all linear layers (1.375\% of the backbone) beats LoRA on the attention projections alone by 0.88 points and reaches 98\% of full fine-tuning accuracy under the same settings. Merged LoRA adds no latency, whereas AdaptFormer adds about 35\%. Parameter-efficient training was \emph{not} faster or lighter in memory than full fine-tuning here.
+    \item \textbf{Prototype head initialization.} The common linear-probe (LP) head, which LP-FT~\cite{kumar2022lpft} fits on frozen features before fine-tuning, is harmful in this regime. Imprinting class-mean prototypes~\cite{qi2018imprinted} instead improves accuracy by 2.1--3.1 points for full fine-tuning, LoRA and AdaptFormer. Loss curves suggest why (\cref{sec:ablation-head}).
+    \item \textbf{A controlled comparison of seven adaptation methods.} With one protocol, methods that make small changes in every block are far more parameter-efficient than fine-tuning the top blocks: LoRA on all linear layers (1.375\% of the backbone) matches the last four blocks (33\%), and BitFit (0.12\%) beats the last block (8.3\%). LoRA is the most accurate parameter-efficient method and reaches 98\% of full fine-tuning accuracy; merged, it adds no latency, whereas the two adapters add 33--40\%. Training memory follows how far gradients propagate rather than how many parameters are trained, so parameter-efficient training is not automatically light (\cref{sec:compare}).
     \item \textbf{A budget-aware recipe with complete accounting.} We report accuracy, trainable parameters, latency, GPU-hours and peak memory for every run. Our final models reach 76.22\% (full fine-tuning, $+$5.4 over the reference) and 71.90\% (LoRA, $+$3.6 over the reference LoRA) on the CodaBench validation set.
 \end{itemize}

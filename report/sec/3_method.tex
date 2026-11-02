@@ -39,7 +39,7 @@ Other settings are batch size 256, bf16 mixed precision, gradient clipping at no
 Training augmentation is RandomResizedCrop (scale 0.25--1) plus horizontal flip.
 For evaluation, images are resized to 248 pixels and center-cropped to 224.
 
-\subsection{Parameter-efficient adaptation}
+\subsection{Parameter-efficient and partial adaptation}
 \label{sec:peft}
 
 \paragraph{LoRA.}
@@ -67,7 +67,37 @@ where $x'$ is the output of the attention sub-block.
 We use bottleneck width 64, scale $s = 0.1$, dropout 0.1 and a zero-initialized $W_\text{up}$, for 1,189,632 parameters (1.387\%).
 Unlike LoRA, the branch cannot be merged into the backbone.
 
-In all PEFT runs the head is also trained.
+\paragraph{Adapter, BitFit and partial fine-tuning.}
+For the comparison in \cref{sec:compare} we add three more methods.
+The serial Adapter~\cite{houlsby2019adapter} applies the same bottleneck to the MLP output, $h + W_\text{up}\,\mathrm{ReLU}(W_\text{down} h)$ with $h = \mathrm{MLP}(\mathrm{LN}(x'))$, before the residual addition and without a scale.
+BitFit~\cite{benzaken2022bitfit} trains only the bias vectors of all linear and normalization layers.
+Partial fine-tuning trains the last $K$ blocks and the final normalization layer and freezes everything below them; one block has 7,087,872 parameters (8.26\% of the backbone).
+\Cref{tab:params} gives the trainable parameters of every method.
+
+\begin{table}[t]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}llrr@{}}
+    \toprule
+    Method & Count & Parameters & \% \\
+    \midrule
+    Partial, last $K$ blocks & $7{,}087{,}872\,K + 1{,}536$ & 7.09M--42.5M & 8.26--49.6 \\
+    Full fine-tuning & all & 85,798,656 & 100 \\
+    BitFit & $12 \cdot 8{,}448 + 1{,}536$ & 102,912 & 0.120 \\
+    Adapter, AdaptFormer & $12 \cdot 99{,}136$ & 1,189,632 & 1.387 \\
+    LoRA, qkv only & $12 \cdot 3{,}072\,r$ & 294,912 & 0.344 \\
+    LoRA, all linear & $12 \cdot 12{,}288\,r$ & 1,179,648 & 1.375 \\
+    \bottomrule
+  \end{tabular}
+  \caption{\textbf{Trainable backbone parameters} (head excluded; $r = 8$; partial: $K \in \{1, 2, 4, 6\}$).
+  1,536: final LayerNorm (partial) or the patch-embedding and final-norm biases (BitFit); 8,448 biases per block.
+  Adapter: $2 \cdot 768 \cdot 64 + 64 + 768 = 99{,}136$ per block.
+  LoRA adds $r\,(d_\text{in} + d_\text{out})$ per layer, \ie $3{,}072\,r$ for qkv and $12{,}288\,r$ for qkv, proj, fc1 and fc2 together.}
+  \label{tab:params}
+\end{table}
+
+In all runs except the zero-shot baseline the head is also trained.
 Because the head alone has 7.69M parameters, we report trainable parameters both excluding it (the convention of the project's 0.34\% LoRA reference) and including it.
 
 \subsection{Initializing the 10,000-way head}

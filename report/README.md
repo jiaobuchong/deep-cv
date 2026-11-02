@@ -1,6 +1,6 @@
 # CS604 期末报告（CVPR 2026 LaTeX 模板）
 
-报告基于 CVPR 2026 官方作者模板（[cvpr-org/author-kit](https://github.com/cvpr-org/author-kit)，tag `CVPR2026-v1(latex)`），用的是正式版（camera-ready）版式：不显示审稿行号，显示作者，带页码。编译好的 PDF 是同目录下的 `main.pdf`（9 页：正文约 6.5 页 + 参考文献 + 2 页附录）。
+报告基于 CVPR 2026 官方作者模板（[cvpr-org/author-kit](https://github.com/cvpr-org/author-kit)，tag `CVPR2026-v1(latex)`），用的是正式版（camera-ready）版式：不显示审稿行号，显示作者，带页码。编译好的 PDF 是同目录下的 `main.pdf`（11 页：正文约 7.5 页，参考文献约 1.5 页，附录 2 页）。
 
 ## 在 Overleaf 上编译
 
@@ -34,7 +34,7 @@ pdflatex main
 | 位置 | 内容 |
 |---|---|
 | `main.tex` 作者栏 | 组员姓名和学号（3 个占位，按实际人数增减）、邮箱 |
-| `sec/4_experiments.tex` 表 2（Main results）的 Test 列 | Phase 2 测试集成绩：最终全量微调模型和最终 PEFT 模型，共 2 处 `TBD` |
+| `sec/4_experiments.tex` 表 3（Main results）的 Test 列 | Phase 2 测试集成绩：最终全量微调模型和最终 PEFT 模型，共 2 处 `TBD` |
 | `sec/4_experiments.tex` 第 4.3 节末尾 | 提醒：补上测试集成绩 |
 | `sec/5_conclusion.tex` 末尾 | 提醒：补上测试集成绩；核对课程的页数要求（CVPR 的上限是正文 8 页，不含参考文献） |
 

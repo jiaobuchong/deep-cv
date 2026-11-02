@@ -74,7 +74,7 @@ GPU-hours include head initialization (feature extraction), training and per-epo
 
 \begin{table}[h]
   \centering
-  \footnotesize
+  \scriptsize
   \setlength{\tabcolsep}{3pt}
   \begin{tabular}{@{}lllrrrrrrr@{}}
     \toprule
@@ -98,12 +98,22 @@ GPU-hours include head initialization (feature extraction), training and per-epo
     \run{1019\_0953\_2\_lora}$^*$ & LoRA all & prototype & 3 & 1.375\% & 72.00 & -- & 0.44$^*$ & 19.9 & 1.82$^*$ \\
     \run{1019\_1120\_2\_lora} & LoRA all & prototype & 6 & 1.375\% & 71.52 & -- & 0.97 & 19.9 & 7.76 \\
     \run{1019\_1319\_3\_lora} & \textbf{LoRA all (final PEFT)} & prototype & 3 & 1.375\% & \textbf{71.98} & \textbf{71.90} & 0.54 & 19.9 & 7.61 \\
+    \midrule
+    \run{1102\_1149\_1\_linear\_proto} & Zero-shot (re-run) & prototype & 0 & 0 & 43.95 & -- & 0.10 & 3.8 & 7.32 \\
+    \run{1102\_1149\_2\_linear\_lp} & Linear probe & LP & -- & 0 & 61.94 & -- & 0.10 & 3.2 & 6.96 \\
+    \run{1102\_1942\_1\_partial\_k1} & Partial FT, $K = 1$ & prototype & 3 & 8.263\% & 67.97 & -- & 0.35 & 3.8 & 7.92 \\
+    \run{1102\_1942\_2\_partial\_k2} & Partial FT, $K = 2$ & prototype & 3 & 16.524\% & 70.99 & -- & 0.35 & 4.1 & 7.41 \\
+    \run{1102\_1942\_3\_partial\_k4} & Partial FT, $K = 4$ & prototype & 3 & 33.046\% & 71.88 & -- & 0.35 & 7.0 & 7.41 \\
+    \run{1102\_1942\_4\_partial\_k6} & Partial FT, $K = 6$ & prototype & 3 & 49.568\% & 72.89 & -- & 0.35 & 10.0 & 7.42 \\
+    \run{1102\_2023\_1\_bitfit} & BitFit & prototype & 3 & 0.120\% & 69.81 & -- & 0.39 & 12.7 & 7.33 \\
+    \run{1102\_2017\_1\_adapter} & Adapter & prototype & 3 & 1.387\% & 71.54 & -- & 0.37 & 12.8 & 9.74 \\
+    \run{1102\_2212\_1\_adaptformer} & AdaptFormer & prototype & 3 & 1.387\% & 71.17 & -- & 0.39 & 12.8 & 10.23 \\
     \bottomrule
   \end{tabular}
-  \caption{\textbf{All 17 runs.} Run IDs encode the batch start time (month, day, hour, minute) and the position in the batch.
-  LoRA all: LoRA on all linear layers. Trainable: backbone parameters excluding the 7.69M head. GB: peak allocated memory during training. ms: batch-1 latency.
-  $^\ddagger$Predicted with flip TTA. $^*$Run on an RTX PRO 6000 Blackwell; all other runs on an A100-SXM4-80GB (speed and latency are not comparable across the two).
-  The linear-probe head (62.07\% holdout) is computed inside every LP run and has no separate run.}
+  \caption{\textbf{All 26 runs.} IDs encode the batch start time (month, day, hour, minute) and the position in the batch; the last block is the method comparison (\cref{sec:compare}).
+  LoRA all: LoRA on all linear layers. Trainable: backbone parameters without the 7.69M head. GB: peak allocated training memory ($K = 1$: feature extraction). ms: batch-1 latency.
+  $^\ddagger$Flip TTA. $^*$RTX PRO 6000 Blackwell; all other runs on an A100-SXM4-80GB (speed and latency are not comparable).
+  The LP head (62.07\%) is computed inside every LP run; \run{1102\_1149\_2} re-ran it alone.}
   \label{tab:all-runs}
 \end{table}
 
@@ -112,8 +122,8 @@ GPU-hours include head initialization (feature extraction), training and per-epo
 
 \begin{table}[h]
   \centering
-  \footnotesize
-  \renewcommand{\arraystretch}{1.15}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.05}
   \begin{tabular}{@{}p{2.2cm}p{3.5cm}p{3.5cm}p{3.5cm}p{3.0cm}@{}}
     \toprule
     & Full fine-tuning & LoRA & AdaptFormer & Linear-probe head \\
@@ -134,3 +144,5 @@ GPU-hours include head initialization (feature extraction), training and per-epo
   \caption{\textbf{Hyperparameters.} Weight decay is not applied to biases, normalization parameters, the class token and position embeddings. Evaluation resizes to 248 pixels and takes a 224 center crop.}
   \label{tab:hparams}
 \end{table}
+
+Methods added for \cref{sec:compare} train for 3 epochs with the settings above, except: partial fine-tuning uses learning rate $3{\times}10^{-4}$ and weight decay 0.05 for $K = 1, 2$ and the full fine-tuning settings for $K = 4, 6$ (drop path only in trained blocks); BitFit uses learning rate $10^{-3}$ and no weight decay; the Adapter is AdaptFormer's bottleneck placed after the MLP, with scale 1.0.

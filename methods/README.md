@@ -1,81 +1,81 @@
-# 单方法 notebook
+# Single-method notebooks
 
-从主 notebook `cs604_vit_final.ipynb` 拆出来的 7 个 notebook，每个只保留一种方法用到的代码，方便对照着看。每个 notebook 都配了一份逐行讲解（最后一列）。
+These 7 notebooks are split out of the main notebook `cs604_vit_final.ipynb`. Each one keeps only the code for one method, so the methods are easy to compare side by side. Each notebook has a line-by-line walkthrough (last column, written in Chinese).
 
-| Notebook | 方法 | 可训练参数（不含分类头） | 我们的结果 | 逐行讲解 |
+| Notebook | Method | Trainable parameters (head excluded) | Our results | Walkthrough |
 |---|---|---|---|---|
-| `01_full.ipynb` | 全量微调 | 85,798,656（100%） | holdout 73.38%；最终模型 CodaBench val 76.22% | `01_full_walkthrough.md` |
-| `02_partial.ipynb` | 选层微调（扫描最后 1、2、4、6 个 block） | K = 1、2、4、6 时依次是 8.26%、16.5%、33.0%、49.6% | holdout 依次是 67.97%、70.99%、71.88%、72.89% | `02_partial_walkthrough.md` |
-| `03_lora.ipynb` | LoRA（r=8，qkv、proj、fc1、fc2） | 1,179,648（1.375%） | holdout 71.98%，CodaBench val 71.90%（最终 PEFT 模型） | `03_lora_walkthrough.md` |
-| `04_adaptformer.ipynb` | AdaptFormer（与 MLP 并联） | 1,189,632（1.387%） | holdout 71.17%（以前用 lp 分类头是 69.05%） | `04_adaptformer_walkthrough.md` |
-| `05_adapter.ipynb` | Adapter（串在 MLP 后面） | 1,189,632（1.387%） | holdout 71.54% | `05_adapter_walkthrough.md` |
-| `06_bitfit.ipynb` | BitFit（只训练 bias） | 102,912（0.120%） | holdout 69.81% | `06_bitfit_walkthrough.md` |
+| `01_full.ipynb` | Full fine-tuning | 85,798,656 (100%) | holdout 73.38%; final model CodaBench val 76.22% | `01_full_walkthrough.md` |
+| `02_partial.ipynb` | Partial fine-tuning (sweeps the last 1, 2, 4 and 6 blocks) | 8.26%, 16.5%, 33.0%, 49.6% for K = 1, 2, 4, 6 | holdout 67.97%, 70.99%, 71.88%, 72.89% | `02_partial_walkthrough.md` |
+| `03_lora.ipynb` | LoRA (r = 8 on qkv, proj, fc1, fc2) | 1,179,648 (1.375%) | holdout 71.98%, CodaBench val 71.90% (final PEFT model) | `03_lora_walkthrough.md` |
+| `04_adaptformer.ipynb` | AdaptFormer (parallel to the MLP) | 1,189,632 (1.387%) | holdout 71.17% (69.05% earlier with the linear-probe head) | `04_adaptformer_walkthrough.md` |
+| `05_adapter.ipynb` | Adapter (in series after the MLP) | 1,189,632 (1.387%) | holdout 71.54% | `05_adapter_walkthrough.md` |
+| `06_bitfit.ipynb` | BitFit (trains only the biases) | 102,912 (0.120%) | holdout 69.81% | `06_bitfit_walkthrough.md` |
 | `07_linear.ipynb` | Zero-shot / linear probe | 0 | holdout 43.95% / 61.94% | `07_linear_walkthrough.md` |
 
-表里的 holdout 都是统一对比设置下的结果，可以直接互相比较，明细见下面的“统一设置下的结果”。
+All holdout numbers in this table use the same comparison setup, so they can be compared directly. See "Results with the shared setup" below for details.
 
-## 怎么看
+## How to read them
 
-- 建议顺序：07 → 01 → 03 → 04 → 02、05、06。07 的讲解最基础（读数据、提特征、分类头、评估），01 的讲解把训练循环讲得最细；其他几份只细讲和 01 不一样的地方，相同的代码会写“见 01 §x”或“见 07 §x”。
-- 结构基本一样：§1 配置，§2 环境，§3 数据，§4 模型和方法，§5 数据集和 holdout，§6 分类头，之后是训练（07 没有）、评估、完整流程、运行、结果表。
-- 每个方法的核心是 §4 的 `apply_method`。想看两个方法的区别，直接对比 §4。
-- 01 到 06 的训练循环（§7 的 `train`）完全一样。01 的 `build_param_groups` 做逐层学习率衰减，02 可以用 `LAYER_DECAY` 打开；LoRA 在 §9 多一行 `merge_and_unload()`，训练完把 LoRA 合并回原权重。
-- 07 不训练主干，没有训练循环。zero-shot 和 linear probe 的区别都在 §6。
-- 超参数直接写成 §1 里的变量。`EXPERIMENTS` 默认跑一次 7 个 notebook 统一的对比设置：proto 分类头、3 epoch、每类留 2 张图做 holdout，所以直接运行就能互相比较。02 另外扫描训练几个 block：K = 1、2、4、6，其中 K = 2 就是统一设置。
+- Suggested order: 07 → 01 → 03 → 04 → 02, 05, 06. The 07 walkthrough covers the basics: reading the data, extracting features, the classifier head and evaluation. The 01 walkthrough explains the training loop in the most detail. The others only explain what differs from 01; for shared code they say "see 01 §x" or "see 07 §x".
+- All notebooks have almost the same structure: §1 config, §2 setup, §3 data, §4 model and method, §5 dataset and holdout, §6 classifier head, then training (not in 07), evaluation, the full pipeline, running, and the results table.
+- The core of each method is `apply_method` in §4. To see how two methods differ, compare their §4.
+- Notebooks 01 to 06 share the same training loop (`train` in §7). In 01, `build_param_groups` applies layer-wise learning-rate decay; 02 can turn it on with `LAYER_DECAY`. LoRA has one extra line in §9, `merge_and_unload()`, which merges LoRA back into the original weights after training.
+- 07 does not train the backbone, so it has no training loop. The only difference between zero-shot and the linear probe is in §6.
+- Hyperparameters are plain variables in §1. By default, `EXPERIMENTS` runs the comparison setup shared by all 7 notebooks once: prototype head, 3 epochs, 2 images per class held out. So any notebook can be run as is, and the results can be compared. 02 also sweeps the number of trained blocks: K = 1, 2, 4 and 6, where K = 2 is the default.
 
-## 统一设置下的结果
+## Results with the shared setup
 
-02、04、05、06、07 是 2026-11-02 在 Colab A100 上跑的（批次 `1102_1942`、`1102_2212`、`1102_2017`、`1102_2023`、`1102_1149`）。全量微调和 LoRA 用的是 10 月 19 日主 notebook 的结果，设置、GPU 和软件版本都一样，可以直接比。所有实验都是 proto 分类头、3 个 epoch、同样的 2 万张 holdout。
+02, 04, 05, 06 and 07 ran on a Colab A100 on 2026-11-02 (batches `1102_1942`, `1102_2212`, `1102_2017`, `1102_2023`, `1102_1149`). Full fine-tuning and LoRA come from the main notebook on 19 October. They used the same setup, GPU and software versions, so they can be compared directly. Every run uses the prototype head, 3 epochs and the same 20,000-image holdout.
 
-| 方法 | 实验 | 可训练参数（不含分类头） | Holdout top-1 | 训练速度（张/秒） | GPU 小时 | 训练显存（GB） | 延迟（ms） |
+| Method | Run | Trainable parameters (head excluded) | Holdout top-1 | Training speed (img/s) | GPU-hours | Training memory (GB) | Latency (ms) |
 |---|---|---:|---:|---:|---:|---:|---:|
-| Zero-shot（不训练） | `1102_1149_1_linear_proto` | 0 | 43.95% | – | 0.10 | 3.8 | 7.32 |
-| Linear probe（只训练分类头） | `1102_1149_2_linear_lp` | 0 | 61.94% | – | 0.10 | 3.2 | 6.96 |
-| BitFit | `1102_2023_1_bitfit` | 102,912（0.120%） | 69.81% | 1,407 | 0.39 | 12.7 | 7.33 |
-| LoRA | `1019_1319_3_lora` | 1,179,648（1.375%） | 71.98% | 888 | 0.54 | 19.9 | 7.61 |
-| Adapter | `1102_2017_1_adapter` | 1,189,632（1.387%） | 71.54% | 1,509 | 0.37 | 12.8 | 9.74 |
-| AdaptFormer | `1102_2212_1_adaptformer` | 1,189,632（1.387%） | 71.17% | 1,436 | 0.39 | 12.8 | 10.23 |
-| 选层 K = 1 | `1102_1942_1_partial_k1` | 7,089,408（8.26%） | 67.97% | 1,706 | 0.35 | ≤3.8 | 7.92 |
-| 选层 K = 2 | `1102_1942_2_partial_k2` | 14,177,280（16.5%） | 70.99% | 1,655 | 0.35 | 4.1 | 7.41 |
-| 选层 K = 4 | `1102_1942_3_partial_k4` | 28,353,024（33.0%） | 71.88% | 1,611 | 0.35 | 7.0 | 7.41 |
-| 选层 K = 6 | `1102_1942_4_partial_k6` | 42,528,768（49.6%） | 72.89% | 1,650 | 0.35 | 10.0 | 7.42 |
-| 全量微调 | `1019_1120_1_full` | 85,798,656（100%） | 73.38% | 1,139 | 0.48 | 18.9 | 7.78 |
+| Zero-shot (no training) | `1102_1149_1_linear_proto` | 0 | 43.95% | – | 0.10 | 3.8 | 7.32 |
+| Linear probe (head only) | `1102_1149_2_linear_lp` | 0 | 61.94% | – | 0.10 | 3.2 | 6.96 |
+| BitFit | `1102_2023_1_bitfit` | 102,912 (0.120%) | 69.81% | 1,407 | 0.39 | 12.7 | 7.33 |
+| LoRA | `1019_1319_3_lora` | 1,179,648 (1.375%) | 71.98% | 888 | 0.54 | 19.9 | 7.61 |
+| Adapter | `1102_2017_1_adapter` | 1,189,632 (1.387%) | 71.54% | 1,509 | 0.37 | 12.8 | 9.74 |
+| AdaptFormer | `1102_2212_1_adaptformer` | 1,189,632 (1.387%) | 71.17% | 1,436 | 0.39 | 12.8 | 10.23 |
+| Partial, K = 1 | `1102_1942_1_partial_k1` | 7,089,408 (8.26%) | 67.97% | 1,706 | 0.35 | ≤3.8 | 7.92 |
+| Partial, K = 2 | `1102_1942_2_partial_k2` | 14,177,280 (16.5%) | 70.99% | 1,655 | 0.35 | 4.1 | 7.41 |
+| Partial, K = 4 | `1102_1942_3_partial_k4` | 28,353,024 (33.0%) | 71.88% | 1,611 | 0.35 | 7.0 | 7.41 |
+| Partial, K = 6 | `1102_1942_4_partial_k6` | 42,528,768 (49.6%) | 72.89% | 1,650 | 0.35 | 10.0 | 7.42 |
+| Full fine-tuning | `1019_1120_1_full` | 85,798,656 (100%) | 73.38% | 1,139 | 0.48 | 18.9 | 7.78 |
 
-- GPU 小时包括开头给分类头提特征的时间（这几次约 6 分钟，10 月那两次约 7 分钟）。
-- 训练显存是 PyTorch 已分配显存的峰值。K = 1 的 3.8 GB 其实是开头提特征时的峰值，训练本身用得更少。
-- 延迟是 batch 1、bf16、只算前向。结构相同的模型之间也有约 0.5 ms 的测量波动（K = 1 到 6 的结构完全一样），所以表里只有 Adapter 和 AdaptFormer 多出的约 2.3–2.9 ms 是真的变慢。
-- K = 4、6 用全量微调的配方（学习率 1e-4、`LAYER_DECAY` 0.75、`DROP_PATH` 0.1），K = 1、2 是学习率 3e-4，所以 K = 2 到 4 之间的变化混了两个因素。
-- 每个设置只跑了一次，holdout 有约 ±0.3 个点的波动。
+- GPU-hours include extracting features for the classifier head at the start: about 6 minutes in these runs, and about 7 minutes in the two October runs.
+- Training memory is the peak memory allocated by PyTorch. For K = 1, the 3.8 GB peak comes from the feature extraction at the start; training itself used less.
+- Latency is measured at batch size 1, in bf16, forward pass only. Models with the same architecture still vary by about 0.5 ms (K = 1 to 6 have exactly the same architecture). So in this table, only the extra 2.3–2.9 ms of Adapter and AdaptFormer is a real slowdown.
+- K = 4 and 6 use the full fine-tuning recipe (learning rate 1e-4, `LAYER_DECAY` 0.75, `DROP_PATH` 0.1), while K = 1 and 2 use learning rate 3e-4. So the change from K = 2 to K = 4 mixes two factors.
+- Each setting ran once, and the holdout varies by about ±0.3 points.
 
-主要发现：
+Main findings:
 
-- **参数加在哪里，比加多少更重要。** BitFit 只训练 0.12% 的参数就有 69.81%，比训练最后 1 个 block（8.26%）的 67.97% 还高；LoRA（1.375%）和训练最后 4 个 block（33.0%）打平。每层都改一点，比只大改最后几层有效。
-- **训练显存看梯度要往回传几层，不看训练多少参数。** 选层微调每多训练 1 个 block，显存多约 1.5 GB；按这个推到 12 个 block 是 18.8 GB，和全量微调实测的 18.9 GB 几乎一样。BitFit、Adapter 和 AdaptFormer 每一层都有要训练的参数，梯度要一直传回第 1 层，所以显存（12.7–12.8 GB）比训练一半参数的 K = 6（10.0 GB）还多，但比全量少约三分之一。LoRA 是例外：显存（19.9 GB）比全量还多，训练也最慢。
-- **选层微调的收益越来越小。** 训练 0、1、2、4、6、12 个 block（0 个就是 linear probe，12 个就是全量）依次是 61.94%、67.97%、70.99%、71.88%、72.89%、73.38%。训练一半的 block 离全量只差 0.5 个点，而且训练最省：显存最多 10 GB，0.35 GPU 小时。
-- **4 种 PEFT 方法里 LoRA 最好**：LoRA 71.98% > Adapter 71.54% > AdaptFormer 71.17% > BitFit 69.81%。LoRA 合并后也不增加延迟，这支持最终 PEFT 选 LoRA。
-- **BitFit**：参数约为 LoRA 的 1/11，从 linear probe 到 LoRA 涨的 10 个点里拿到了 7.9 个，推理也不变慢，但比 LoRA 低 2.2 个点。
-- **Adapter、AdaptFormer 和 LoRA 比**：准确率分别低 0.44 和 0.81；训练快 1.6–1.7 倍、显存少 36%；但都不能合并回原权重，推理分别慢 28% 和 34%。
-- **串联和并联差不多。** Adapter（串在 MLP 后面）71.54%，AdaptFormer（和 MLP 并联）71.17%，差 0.37，和 ±0.3 的波动差不多大。两者的缩放系数也不同（1.0 和 0.1），所以比的是两种方法各自的常用设置，不只是位置。
-- **proto 分类头对 AdaptFormer 也有效。** 10 月那次 AdaptFormer（`1018_1239_3_adaptformer`）除了用 lp 分类头，其他设置和这次完全一样，是 69.05%；换成 proto 头是 71.17%（+2.1）。加上全量微调（+2.5）和 LoRA（+2.5），三种方法都涨了 2 个点以上。lp 头那次的训练 loss 反而更低（1.86 对 1.98），和全量微调上看到的一样：lp 头更容易记住训练集。
-- 没有一个 PEFT 方法超过全量微调。
-- Zero-shot 和 9 月主 notebook 的结果完全一样（43.95%），linear probe 只差 0.13（61.94% 和 62.07%），说明这些 notebook 和主 notebook 的结果一致。
+- **Where the parameters go matters more than how many there are.** BitFit trains only 0.12% of the parameters and reaches 69.81%. That is higher than training the last block (8.26%), which reaches 67.97%. LoRA (1.375%) ties training the last 4 blocks (33.0%). Small changes in every layer work better than big changes in the last few layers.
+- **Training memory depends on how far the gradients flow back, not on how many parameters are trained.** In partial fine-tuning, each extra trained block adds about 1.5 GB. Extended to 12 blocks, this gives 18.8 GB, almost the same as the 18.9 GB measured for full fine-tuning. BitFit, Adapter and AdaptFormer have trainable parameters in every block, so the gradients must flow all the way back to the first block. Their memory (12.7–12.8 GB) is higher than for K = 6 (10.0 GB), which trains half of the network, but about a third lower than for full fine-tuning. LoRA is the exception: it needs more memory than full fine-tuning (19.9 GB) and trains the slowest.
+- **Each extra block in partial fine-tuning helps less.** Training 0, 1, 2, 4, 6 and 12 blocks (0 is the linear probe, 12 is full fine-tuning) gives 61.94%, 67.97%, 70.99%, 71.88%, 72.89% and 73.38%. Training half of the blocks is only 0.5 points below full fine-tuning, and it is the cheapest to train: at most 10 GB of memory and 0.35 GPU-hours.
+- **LoRA is the best of the 4 PEFT methods**: LoRA 71.98% > Adapter 71.54% > AdaptFormer 71.17% > BitFit 69.81%. After merging, LoRA also adds no latency. This supports choosing LoRA as the final PEFT model.
+- **BitFit** has about 1/11 of LoRA's parameters. LoRA gains 10 points over the linear probe, and BitFit gets 7.9 of them. It adds no inference cost either, but it is 2.2 points below LoRA.
+- **Adapter and AdaptFormer compared with LoRA**: their accuracy is 0.44 and 0.81 points lower. They train 1.6–1.7× faster and use 36% less memory. But neither can be merged into the original weights, so inference is 28% and 34% slower.
+- **Series and parallel are about the same.** Adapter (in series after the MLP) gets 71.54%, and AdaptFormer (parallel to the MLP) gets 71.17%. The gap of 0.37 is about the size of the ±0.3 noise. The two also use different scales (1.0 and 0.1), so this compares the usual setting of each method, not only the position.
+- **The prototype head also helps AdaptFormer.** The October AdaptFormer run (`1018_1239_3_adaptformer`) had the same settings except for the linear-probe (lp) head, and got 69.05%. With the prototype head it gets 71.17% (+2.1). Together with full fine-tuning (+2.5) and LoRA (+2.5), all three methods gain more than 2 points. The lp run even ends with a lower training loss (1.86 vs 1.98). Full fine-tuning shows the same pattern: the lp head memorizes the training set more easily.
+- No PEFT method beats full fine-tuning.
+- Zero-shot gives exactly the same result as the main notebook in September (43.95%), and the linear probe differs by only 0.13 (61.94% vs 62.07%). So these notebooks agree with the main notebook.
 
-## 删掉了什么
+## What was removed
 
-每个 notebook 只保留默认实验用得到的代码。下面这些通用功能只在主 notebook 里：
+Each notebook keeps only the code that its default experiments use. These general features are only in the main notebook:
 
-- 断线后接着训练、跳过已经跑完的实验
-- 时间预算控制（预计超时就自动缩短训练）
-- 翻转 TTA、`torch.compile`
-- 写 CodaBench 提交文件（Phase 1 已经结束，Phase 2 必须用主 notebook）
-- lp 和 random 分类头初始化（01 到 06 只用 proto；07 有 proto 和 lp）
-- 不留 holdout、每类 45 张全拿来训练的设置
-- 在 T4 或 CPU 上运行（这里要求支持 bf16 的 A100、L4 或 H100）
+- resuming after a disconnect, and skipping experiments that already finished
+- the time-budget control (training is shortened automatically if it would run over time)
+- flip TTA and `torch.compile`
+- writing CodaBench submission files (Phase 1 is over, and Phase 2 must use the main notebook)
+- lp and random head initialization (01 to 06 use only the prototype head; 07 has the prototype and lp heads)
+- the setup with no holdout, which trains on all 45 images per class
+- running on a T4 or a CPU (these notebooks need an A100, L4 or H100, which support bf16)
 
-## 注意
+## Notes
 
-- 这些 notebook 能在 Colab 上单独运行，运行一次就是训练一个新模型。结果在 Drive 的 `cs604/runs/` 和 `cs604/batches/` 下。
-- 可以开几个 Colab 会话同时跑不同的 notebook，但开跑时间要错开一分钟以上。批次名是“月日_时分”，同一分钟开跑的两个 notebook 会写进同一个 `batches/` 目录，汇总文件 `results.md`、`results.json` 会互相覆盖（每次实验自己的 `runs/` 目录不受影响）。
-- 数据默认从 Hugging Face 下载（`DATA_FROM_HF = True`）：Colab 上实测下载约 2 分钟，加上在本地解压一共约 8 分钟。下载加解压的过程中，本地磁盘要有约 80 GB 空闲。改成 `False` 就用 Drive 上的备份，直接从 Drive 解压，约 33 MB/s，实测 20.3 分钟。主 notebook `cs604_vit_final.ipynb` 只从 Hugging Face 取数据，没有 Drive 选项。
-- Phase 2 的测试集预测只能用主 notebook 的 `PHASE2_TEST` 开关，也就是 Phase 1 的同一个模型。
-- 主 notebook 以后如果改了，这里不会自动同步；notebook 改了，对应的逐行讲解也要跟着改。
+- Each notebook can run on its own in Colab, and one run trains one new model. The results are saved to `cs604/runs/` and `cs604/batches/` on Drive.
+- You can run different notebooks at the same time in several Colab sessions, but start them at least a minute apart. The batch name is the start time in the form `MMDD_HHMM`. So two notebooks started in the same minute write to the same `batches/` folder, and their summary files `results.md` and `results.json` overwrite each other. Each run's own folder under `runs/` is not affected.
+- By default the data is downloaded from Hugging Face (`DATA_FROM_HF = True`). On Colab the download took about 2 minutes, and about 8 minutes in total with unpacking on the local disk. Downloading and unpacking need about 80 GB of free local disk. With `False`, the notebook unpacks the copy on Drive instead, at about 33 MB/s; this took 20.3 minutes. The main notebook `cs604_vit_final.ipynb` only gets the data from Hugging Face and has no Drive option.
+- Phase 2 test predictions must use the `PHASE2_TEST` switch of the main notebook, so that they come from the same model as in Phase 1.
+- If the main notebook changes later, these notebooks are not updated automatically. When a notebook changes, its walkthrough must be updated too.

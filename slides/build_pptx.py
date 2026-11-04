@@ -176,12 +176,27 @@ def card_row(el, y, cards, fills, gap=20, pad=18, radius=10, outlines=None):
     return y + height
 
 
-# ---------------------------------------------------------------- method diagrams
+# ---------------------------------------------------------------- method slides
 
 LADDER = ["LP", "Partial", "Full", "BitFit", "Adapter", "AdaptFormer", "LoRA"]
-FROZEN, LINE = HEAD_ROW, "B9B4AA"
-K_SHADES = {1: "1F5FAD", 2: BLUE, 4: "7FB2F0", 6: "BFD7F5"}   # block trained for K >= 1, 2, 4 or 6
 PROTOCOL = "Same protocol for all seven: prototype head, 3 epochs, 20,000-image holdout, A100"
+DIAGRAM_ALT = {  # the diagrams are drawn by figures/make_method_diagrams.py
+    "lp": "ViT-B/16 from image to logits: 224×224×3 image, patch embedding (0.59M), 197 tokens of 768, 12 Transformer "
+          "blocks (7.09M each), norm, the 768-d [CLS] feature and the 768 → 10,000 head (7.69M). Only the head is trained.",
+    "partial": "The same network as for the linear probe. The last K blocks (K = 1, 2, 4 or 6), the final norm and the head "
+               "are trained; bars under the blocks show which blocks each K trains.",
+    "full": "The same network as for the linear probe, with every part trained: patch embedding, [CLS] and position "
+            "embeddings, all 12 blocks, the final norm and the head.",
+    "bitfit": "One Transformer block: LN, qkv (768 → 2304), attention (12 heads × 64), proj, residual add, LN, fc1 "
+              "(768 → 3072), GELU, fc2 (3072 → 768), residual add. Only the bias vectors are trained: β 768 in each LN, "
+              "b 2304 in qkv, b 768 in proj, b 3072 in fc1 and b 768 in fc2.",
+    "adapter": "One Transformer block with a trained adapter after fc2, in series: down 768 → 64 (49,216 parameters), a "
+               "197 × 64 bottleneck and up 64 → 768 (49,920), with its own skip connection.",
+    "adaptformer": "One Transformer block with a trained side branch from the block input to the second residual add: "
+                   "down 768 → 64, a 197 × 64 bottleneck, up 64 → 768 and a scale s = 0.1.",
+    "lora": "One Transformer block with a trained low-rank pair next to each frozen linear layer: qkv A 8×768, B 2304×8 "
+            "(24,576); proj A 8×768, B 768×8 (12,288); fc1 A 8×768, B 3072×8 (30,720); fc2 A 8×3072, B 768×8 (30,720).",
+}
 
 
 def pills(el, current):
@@ -195,119 +210,14 @@ def pills(el, current):
         x += w + gap
 
 
-def part(el, x, y, w, h, text, state, size=11):
-    """One box of a diagram. state: 'train' (blue), 'frozen' (grey) or 'op' (no parameters, outlined)."""
-    if state == "train":
-        el.append(rect(x, y, w, h, BLUE, radius=4, label=text, label_size=size))
-    elif state == "frozen":
-        el.append(rect(x, y, w, h, FROZEN, radius=4, label=text, label_color=INK2, label_size=size, label_bold=False))
-    else:
-        el.append(rect(x, y, w, h, "FFFFFF", radius=4, outline=FROZEN, outline_w=1.25, label=text, label_color=MUTED,
-                       label_size=size, label_bold=False))
-
-
-def legend(el, x, y, items, note=None):
-    """One row of swatches; items are (state, text). An optional note follows in muted text."""
-    for state, text in items:
-        part(el, x, y + 1, 12, 12, "", state)
-        t = T(x + 18, y, text_width(text, "Arial", 11, False) + 4, [text], size=11, color=INK2, line=1.2)
-        el.append(t)
-        x += 18 + t["w"] + 16
-    if note:
-        el.append(T(x + 8, y, LEFT + CONTENT_W - x - 8, [note], size=11, color=MUTED, line=1.2))
-
-
-def stack_diagram(el, top, mode):
-    """Patch embedding, the 12 blocks, the final norm and the head in one row. mode: 'lp', 'partial' or 'full'."""
-    h, y, bw, gap = 40, top + 6, 38, 6
-    el.append(rect(LEFT, y + h / 2 - 0.75, CONTENT_W - 6, 1.5, LINE))
-    x = LEFT
-    part(el, x, y, 92, h, "Patch embed", "train" if mode == "full" else "frozen")
-    x += 92 + 16
-    xs = []
-    for i in range(12):
-        need = 12 - i                       # block i + 1 is trained when K >= need
-        if mode == "full":
-            part(el, x, y, bw, h, str(i + 1), "train")
-        elif mode == "partial" and need <= 6:
-            k = next(k for k in (1, 2, 4, 6) if k >= need)
-            el.append(rect(x, y, bw, h, K_SHADES[k], radius=4, label=str(i + 1),
-                           label_color="FFFFFF" if k in (1, 2) else INK, label_size=11))
-        else:
-            part(el, x, y, bw, h, str(i + 1), "frozen")
-        xs.append(x)
-        x += bw + gap
-    x += 16 - gap
-    part(el, x, y, 52, h, "Norm", "frozen" if mode == "lp" else "train")
-    x += 52 + 16
-    part(el, x, y, 112, h, "Head (10,000)", "train")
-    if mode == "partial":
-        for j, k in enumerate((1, 2, 4, 6)):
-            by = y + h + 14 + j * 13
-            bx = xs[12 - k]
-            el.append(rect(bx, by, xs[11] + bw - bx, 4, K_SHADES[k], radius=2))
-            el.append(T(bx - 52, by - 5, 46, [f"K = {k}"], size=10, color=INK2, align="right", line=1.2))
-    legend(el, LEFT, y + h + 16, [("train", "trained"), ("frozen", "frozen")])
-
-
-def block_diagram(el, top, method):
-    """One transformer block from left to right; the parts `method` trains are blue."""
-    yc, bh, gap = top + 44, 32, 12
-    seq = [("LN", 36, "norm"), ("qkv", 46, "lin"), ("Attention", 78, "op"), ("proj", 46, "lin"), ("+", 22, "add"),
-           ("LN", 36, "norm"), ("fc1", 46, "lin"), ("GELU", 52, "op"), ("fc2", 46, "lin")]
-    if method == "adapter":
-        seq.append(("Adapter", 70, "adapter"))
-    seq.append(("+", 22, "add"))
-    pos, x = [], LEFT + 18
-    for name, w, kind in seq:
-        pos.append((name, kind, x, w))
-        x += w + gap
-    end = x - gap + 18
-    el.append(rect(LEFT, yc - 0.75, end - LEFT, 1.5, LINE))            # the main path
-    adds = [p for p in pos if p[1] == "add"]
-    split2 = adds[0][2] + adds[0][3] + gap / 2                          # where the second residual leaves the path
-    ry = yc - 38
-    for sx, add in ((LEFT + 8, adds[0]), (split2, adds[1])):           # residual connections, above the path
-        ax = add[2] + add[3] / 2
-        el.append(rect(sx - 0.75, ry, 1.5, yc - ry, LINE))
-        el.append(rect(sx - 0.75, ry, ax - sx + 1.5, 1.5, LINE))
-        el.append(rect(ax - 0.75, ry, 1.5, yc - 11 - ry, LINE))
-    if method == "adaptformer":                                         # side branch under the MLP
-        fc1, fc2, add2 = pos[6], pos[8], adds[1]
-        by, bw2 = yc + 40, 96
-        bx = (fc1[2] + fc2[2] + fc2[3]) / 2 - bw2 / 2
-        ax = add2[2] + add2[3] / 2
-        el.append(rect(split2 - 0.75, yc, 1.5, by - yc, LINE))
-        el.append(rect(split2 - 0.75, by - 0.75, ax - split2 + 1.5, 1.5, LINE))
-        el.append(rect(ax - 0.75, yc + 11, 1.5, by - yc - 11, LINE))
-        el.append(rect(bx, by - 12, bw2, 24, BLUE, radius=4, label="Adapter × s", label_size=11))
-    for name, kind, x, w in pos:
-        if kind == "add":
-            o = oval(x, yc - 11, 22, "FFFFFF", label="+", label_color=INK2, label_size=13)
-            o.update(outline=LINE, outline_w=1.25)
-            el.append(o)
-        else:
-            part(el, x, yc - bh / 2, w, bh, name, "train" if kind == "adapter" else "op" if kind == "op" else "frozen")
-        if method == "bitfit" and kind in ("norm", "lin"):
-            el.append(oval(x + w - 8, yc - bh / 2 - 8, 15, BLUE, label="b", label_size=9))
-        if method == "lora" and kind == "lin":
-            cx = x + w / 2
-            el.append(rect(cx - 0.75, yc + bh / 2, 1.5, 12, LINE))
-            el.append(rect(cx - 19, yc + bh / 2 + 12, 38, 20, BLUE, radius=4, label="BA", label_size=10))
-    note = {"bitfit": "One of the 12 identical blocks. b = a trained bias.",
-            "adapter": "One of the 12 identical blocks. Adapter: 768 → 64 → 768.",
-            "adaptformer": "One of the 12 identical blocks. Same adapter, beside the MLP.",
-            "lora": "One of the 12 identical blocks. BA: rank-8 update of W."}[method]
-    legend(el, LEFT, yc + 64, [("train", "trained"), ("frozen", "frozen"), ("op", "no weights")], note)
-
-
 def method_slide(slides, n, idx, title, diagram, bullets, notes):
     el = []
     ct = header(el, f"Method {idx + 1} of 7", title)
     pills(el, idx)
-    diagram(el, ct)
+    img = image(f"diagrams/method_{diagram}.png", LEFT, ct, CONTENT_W, DIAGRAM_ALT[diagram])
+    el.append(img)
     paras = [[(lead + " ", {"bold": True, "color": INK}), (text, {})] for lead, text in bullets]
-    el.append(T(LEFT, ct + 146, CONTENT_W, paras, size=15, color=INK2, line=1.3, after=10, bullet=16))
+    el.append(T(LEFT, img["y"] + img["h"] + 12, CONTENT_W, paras, size=15, color=INK2, line=1.3, after=9, bullet=16))
     footer(el, n, PROTOCOL)
     slides.append(dict(bg=PAGE, el=el, notes=notes))
 
@@ -367,7 +277,7 @@ def build_slides():
         "0.3 points, so the comparisons that follow use holdout.")))
 
     # 3–9. The seven methods, simplest first
-    method_slide(slides, 3, 0, "Linear probe: train only the head", lambda el, top: stack_diagram(el, top, "lp"), [
+    method_slide(slides, 3, 0, "Linear probe: train only the head", "lp", [
         ("Idea:", "freeze the whole backbone and train only the new 10,000-class head."),
         ("Setting:", "the head starts from class prototypes; 10 epochs on cached features, LR 1e-3."),
         ("Parameters:", "0 in the backbone. Head: 768 × 10,000 + 10,000 = 7.69M, trained in every method."),
@@ -376,12 +286,13 @@ def build_slides():
     ], (
         "We go from the simplest method to the most complex. Every method on the next seven slides uses the same protocol: the "
         "same prototype-initialized head, 3 epochs, the same 20,000-image holdout and the same A100. The diagram shows what each "
-        "method trains in blue and what it freezes in grey.\n\nThe linear probe freezes the whole backbone and trains only the "
+        "method trains in blue and what it freezes in grey. Read it like the classic AlexNet figure: the 3D boxes are tensors "
+        "with their sizes, and the rounded boxes are layers with their shapes and parameter counts.\n\nThe linear probe freezes the whole backbone and trains only the "
         "new 10,000-class head on cached features. It needs no backbone gradients at all and takes 0.10 GPU-hours. It reaches "
         "61.94%, up from 43.95% for the untrained prototype head. But the features never change, so this is a ceiling for frozen "
         "features. Next we unfreeze the top blocks."))
 
-    method_slide(slides, 4, 1, "Partial fine-tuning: the last K blocks", lambda el, top: stack_diagram(el, top, "partial"), [
+    method_slide(slides, 4, 1, "Partial fine-tuning: the last K blocks", "partial", [
         ("Idea:", "train the last K blocks and the final norm; freeze everything below them."),
         ("Setting:", "K = 1 and 2 at LR 3e-4; K = 4 and 6 use the full fine-tuning recipe."),
         ("Parameters:", "K × 7,087,872 + 1,536, so 8.26% (K = 1) to 49.6% (K = 6)."),
@@ -396,7 +307,7 @@ def build_slides():
         "gradients only flow through the top blocks, so memory stays between 3.8 and 10 GB. The problem is that the lower blocks "
         "never adapt. So next we train every block."))
 
-    method_slide(slides, 5, 2, "Full fine-tuning: the upper bound", lambda el, top: stack_diagram(el, top, "full"), [
+    method_slide(slides, 5, 2, "Full fine-tuning: the upper bound", "full", [
         ("Idea:", "train every backbone weight together with the head."),
         ("Setting:", "LR 1e-4, layer-wise decay 0.75, drop path 0.1, weight decay 0.05."),
         ("Parameters:", "85,798,656 = 100% of the backbone, a 374 MB checkpoint per task."),
@@ -408,7 +319,7 @@ def build_slides():
         "on holdout. It is also the most expensive: 18.9 GB of training memory, and every task needs its own 374 MB checkpoint. "
         "The rest of the ladder asks how close we can get while training far fewer weights."))
 
-    method_slide(slides, 6, 3, "BitFit: train only the biases", lambda el, top: block_diagram(el, top, "bitfit"), [
+    method_slide(slides, 6, 3, "BitFit: train only the biases", "bitfit", [
         ("Idea:", "freeze every weight matrix; train only the bias terms and the head."),
         ("Setting:", "LR 1e-3, no weight decay."),
         ("Parameters:", "12 × 8,448 + 1,536 = 102,912 biases, only 0.120% of the backbone."),
@@ -422,7 +333,7 @@ def build_slides():
         "already exist, inference costs nothing extra. But it stays 3.6 points below full fine-tuning: it lacks capacity. So "
         "next we add small trainable modules."))
 
-    method_slide(slides, 7, 4, "Adapter: a bottleneck after each MLP", lambda el, top: block_diagram(el, top, "adapter"), [
+    method_slide(slides, 7, 4, "Adapter: a bottleneck after each MLP", "adapter", [
         ("Idea:", "insert a small bottleneck, 768 → 64 → 768, after each MLP, in series."),
         ("Setting:", "bottleneck 64, scale 1.0, LR 1e-3; the up-projection starts at zero."),
         ("Parameters:", "12 × (768 × 64 + 64 + 64 × 768 + 768) = 1,189,632 = 1.387%."),
@@ -435,7 +346,7 @@ def build_slides():
         "main path and cannot be folded into the frozen weights, so batch-1 latency goes from 7.33 to 9.74 ms.\n\nIt also "
         "rewrites the MLP output directly. AdaptFormer, next, moves the same module to a side branch."))
 
-    method_slide(slides, 8, 5, "AdaptFormer: a scaled side branch", lambda el, top: block_diagram(el, top, "adaptformer"), [
+    method_slide(slides, 8, 5, "AdaptFormer: a scaled side branch", "adaptformer", [
         ("Idea:", "run the same bottleneck beside the MLP and add its output, scaled by s."),
         ("Setting:", "bottleneck 64, s = 0.1, LR 1e-3."),
         ("Parameters:", "same as Adapter: 1,189,632 = 1.387% of the backbone."),
@@ -449,7 +360,7 @@ def build_slides():
         "Both adapters share one problem: they add layers at inference, about 30 to 40% more latency at batch size 1. We want "
         "an update that disappears after training. That is LoRA."))
 
-    method_slide(slides, 9, 6, "LoRA: a low-rank update that merges", lambda el, top: block_diagram(el, top, "lora"), [
+    method_slide(slides, 9, 6, "LoRA: a low-rank update that merges", "lora", [
         ("Idea:", "learn ΔW = BA beside each frozen linear layer; merge W + (α/r)·BA after training."),
         ("Setting:", "rank r = 8, α = 16, on qkv, proj, fc1 and fc2; LR 1e-3."),
         ("Parameters:", "12 × 8 × (3,072 + 1,536 + 3,840 + 3,840) = 1,179,648 = 1.375%."),

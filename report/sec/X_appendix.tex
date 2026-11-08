@@ -6,8 +6,8 @@
 \section{Training-log excerpts}
 \label{sec:logs}
 
-The project asks for the training time and VRAM to be documented with training logs.
-Below are excerpts of \texttt{train\_log.txt} for our two final models; the full logs (every 100 steps) are available on request.
+The project asks us to back up training time and VRAM with training logs.
+Below are parts of \texttt{train\_log.txt} for our two final models; the full logs (every 100 steps) are available on request.
 Dates are removed from the timestamps, Google Drive paths are shortened, and long lines are wrapped.
 GPU-hours include head initialization (feature extraction), training and per-epoch holdout evaluation (\cref{sec:budget}).
 
@@ -41,7 +41,7 @@ GPU-hours include head initialization (feature extraction), training and per-epo
 \end{verbatim}
 }
 
-\paragraph{Final PEFT model} (LoRA on all linear layers, prototype head, 3 epochs, 2 images per class held out):
+\paragraph{Final LoRA model} (LoRA on all linear layers, prototype head, 3 epochs, 2 images per class held out, no TTA):
 {\scriptsize
 \begin{verbatim}
 ========== 1019_1319_3_lora ==========
@@ -117,6 +117,73 @@ GPU-hours include head initialization (feature extraction), training and per-epo
   \label{tab:all-runs}
 \end{table}
 
+\paragraph{Runs after the deadline (\cref{sec:post}).}
+None of them is used for a ranked result.
+Batch \run{1105\_0141} ran zero-shot and the linear probe with the ImageNet-21k-only checkpoints \nolinkurl{augreg_in21k} and \nolinkurl{orig_in21k} (\cref{sec:budget}), and evaluated \run{1019\_1120\_1\_full} at six test sizes.
+\run{1105\_1031\_1\_full\_288} trains 3 epochs at 288 pixels on the holdout split (0.68 GPU-h, 30.2\,GB).
+\run{1105\_1032\_1\_full\_288} trains the final recipe at 288 pixels on all images (1.61 GPU-h, 30.2\,GB); it was not submitted, so it has no test score.
+
+\section{Hardware, software and the path to the final model}
+\label{sec:hardware}
+
+All runs use one NVIDIA A100-SXM4-80GB with 12 CPU cores, except one ablation batch (random and prototype heads for LoRA in \cref{tab:head}), which ran on an RTX PRO 6000 Blackwell.
+Repeating its prototype run on the A100 gave 71.98\% \vs 72.00\%, so accuracies are comparable across the two GPUs; speeds and latencies are not.
+Software, as logged from batch \run{1019\_1120} on, which covers all final models and the method comparison: PyTorch 2.11.0 (CUDA 13.0), timm 1.0.30 and PEFT 0.21.1. Earlier runs used the then-current releases, which were not logged.
+\Cref{fig:progression} shows the validation accuracy of the final full fine-tuning recipe as we changed one setting at a time.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig1_codabench_progression_col.pdf}
+  \caption{\textbf{CodaBench validation accuracy as we change one setting at a time} (all runs: full fine-tuning, 8 epochs). The gray dot is the reference. Positions encode values, so the axis starts at 70\%.}
+  \label{fig:progression}
+\end{figure}
+
+\section{Ablation tables}
+\label{sec:ablation-tables}
+
+\Cref{tab:peft,tab:length} give the numbers behind \cref{sec:ablation-peft,sec:ablation-length}.
+
+\begin{table}[t]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    LP head, 3 epochs & Params & Holdout & img/s & GB & ms \\
+    \midrule
+    LoRA qkv, lr $10^{-3}$ & 0.344\% & 68.57 & 1,341 & 13.5 & 7.22 \\
+    LoRA qkv, lr $5{\times}10^{-4}$ & 0.344\% & 68.45 & 1,353 & 13.5 & 7.15 \\
+    LoRA all linear & 1.375\% & \textbf{69.45} & 885 & 19.9 & 7.03 \\
+    AdaptFormer & 1.387\% & 69.05 & 1,437 & 12.8 & 9.89 \\
+    \midrule
+    Full fine-tuning & 100\% & 70.88 & 1,131 & 18.9 & 7.31 \\
+    \bottomrule
+  \end{tabular}
+  \caption{\textbf{PEFT design.} Params: trainable backbone parameters (head excluded). img/s: training throughput; GB: peak training memory; ms: batch-1 latency after merging (A100, bf16).}
+  \label{tab:peft}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Setting & Short (ep) & Long (ep) & $\Delta$ \\
+    \midrule
+    Full FT, LP & 70.88 (3) & 72.31 (8) & $+$1.43 \\
+    Full FT, prototype, final$^\ddagger$ & 74.01 (3) & 76.22 (8) & $+$2.21 \\
+    LoRA qkv, LP$^\dagger$ & 68.57 (3) & 68.69 (10) & $+$0.12 \\
+    LoRA all, LP & 69.45 (3) & 69.87 (6) & $+$0.42 \\
+    LoRA all, prototype & 71.98 (3) & 71.52 (6) & \minus0.46 \\
+    \bottomrule
+  \end{tabular}
+  \caption{\textbf{Training length} (holdout top-1, \%; LoRA all: LoRA on all linear layers).
+  $^\ddagger$All 45 images per class with flip TTA, CodaBench validation.
+  $^\dagger$The 10-epoch run also lowered the head learning rate to $2{\times}10^{-4}$.}
+  \label{tab:length}
+\end{table}
+
 \section{Hyperparameters}
 \label{sec:hparams}
 
@@ -129,7 +196,7 @@ GPU-hours include head initialization (feature extraction), training and per-epo
     & Full fine-tuning & LoRA & AdaptFormer & Linear-probe head \\
     \midrule
     Trainable & all weights + head & $A, B$ in qkv, proj, fc1, fc2 (all 12 blocks) + head & parallel MLP adapters + head & head only, on cached features \\
-    Method-specific & layer-wise lr decay 0.75, drop path 0.1 & $r=8$, $\alpha=16$, no dropout, merged after training & bottleneck 64, scale 0.1, dropout 0.1 & initialized from the prototype head \\
+    Method-specific & layer-wise lr decay 0.75, drop path 0.1 & $r=8$, $\alpha=16$, no dropout, no layer decay, no drop path, merged after training & bottleneck 64, scale 0.1, dropout 0.1 & initialized from the prototype head \\
     Optimizer & AdamW & AdamW & AdamW & AdamW \\
     Learning rate & $10^{-4}$ (head $10^{-4}$) & $10^{-3}$ (head $10^{-3}$) & $10^{-3}$ (head $10^{-3}$) & $10^{-3}$ \\
     Weight decay & 0.05 & $10^{-4}$ & $10^{-4}$ & $10^{-4}$ \\

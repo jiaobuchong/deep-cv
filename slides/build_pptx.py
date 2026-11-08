@@ -224,10 +224,14 @@ def method_slide(slides, n, idx, title, diagram, bullets, notes):
 
 # ---------------------------------------------------------------- slides
 
+NAMES = ["[Name A]", "[Name B]", "[Name C]", "[Name D]"]   # the four speakers, in order
+TEST_FULL, TEST_LORA = "76.09%", "71.67%"                  # CodaBench test (Phase 2), entered on 5 November
+
+
 def build_slides():
     slides = []
 
-    # 1. Cover
+    # 1. Cover (speaker A)
     el = []
     el.append(T(LEFT, 64, 700, ["CS604 course project · Team 06"], size=14, bold=True, color=DARK_BLUE, spacing=2, caps=True))
     for i, c in enumerate([GRAY, BLUE, ORANGE]):
@@ -235,64 +239,114 @@ def build_slides():
     t = T(LEFT, 150, CONTENT_W, ["Prototype-initialized adaptation of ViT-B/16 for 10,000-class fine-grained classification"],
           family="Georgia", size=44, bold=True, color=DARK_TEXT, line=1.1, role="title")
     el.append(t)
-    el.append(T(LEFT, t["y"] + t["h"] + 26, 760, ["Seven adaptation methods, one budget. Our recipe: 76.22% (full fine-tuning) "
-                                                  "and 71.90% (LoRA) on CodaBench val."], size=18, color=DARK_SUB, line=1.35))
-    el.append(T(LEFT, 468, CONTENT_W, ["[Member names] · 7 November 2026"], size=14, color=DARK_SUB, pinned=True))
+    el.append(T(LEFT, t["y"] + t["h"] + 26, 760, [f"Seven adaptation methods, one budget. Test top-1: {TEST_FULL} with full "
+                                                  f"fine-tuning and {TEST_LORA} with LoRA."], size=18, color=DARK_SUB, line=1.35))
+    el.append(T(LEFT, 468, CONTENT_W, [" · ".join(NAMES) + " · 7 November 2026"], size=14, color=DARK_SUB, pinned=True))
     slides.append(dict(bg=DARK, el=el, big_title=True, notes=(
-        "Good afternoon. We are Team 06. Our task was to adapt one pretrained Vision Transformer, ViT-B/16, to a 10,000-class "
-        "fine-grained dataset under a fixed compute budget.\n\nThe talk has three parts. First, seven adaptation methods, from the "
-        "simplest to the most complex, all run with the same protocol. Second, our recipe: how we start the classifier head, and "
-        "how we spend the budget. Third, a summary.\n\nThe headline: our full fine-tuning model reaches 76.22% top-1 on the "
-        "CodaBench validation set, and our LoRA model reaches 71.90% while training only 1.375% of the backbone.")))
+        "Speaker A.\n\nGood afternoon. We are Team 06. Our task was to adapt one pretrained Vision Transformer, ViT-B/16, to a "
+        "10,000-class fine-grained dataset under a fixed compute budget.\n\nThe headline: on the hidden test set, our full "
+        f"fine-tuning model reaches {TEST_FULL} top-1, and our LoRA model reaches {TEST_LORA} while training only 1.375% of "
+        "the backbone. The four of us will each present one part.")))
 
-    # 2. Task and reference baselines
+    # 2. Agenda (speaker A)
     el = []
-    ct = header(el, "The task", "One ViT, 10,000 classes, a fixed budget")
-    num = dict(family="Georgia", size=34, bold=True, color=BLUE, line=1.1, gap=4)
-    lab = dict(size=14, color=INK2, line=1.25)
-    bottom = card_row(el, ct, [
-        [dict(paras=["10,000"], **num), dict(paras=["fine-grained classes, anonymized"], **lab)],
-        [dict(paras=["45"], **num), dict(paras=["training images per class, 450,000 in total"], **lab)],
-        [dict(paras=["1.2 h"], **num), dict(paras=["per run on one A100-80GB"], **lab)],
-        [dict(paras=["e.g. < 5%"], **num), dict(paras=["trainable share the brief suggests"], **lab)],
-    ], [CARD] * 4, gap=16, pad=14)
-    tb = table(LEFT, bottom + 18, [400, 144, 144, 144], [
+    ct = header(el, "Agenda", "Four parts, four speakers")
+    big = dict(family="Georgia", size=34, bold=True, color=BLUE, line=1.1, gap=6)
+    tit = dict(size=15, bold=True, line=1.25, gap=10)
+    who = dict(size=13, color=INK2, line=1.3)
+    bottom = card_row(el, ct + 4, [
+        [dict(paras=["1"], **big), dict(paras=["The task, the data and two simple methods"], **tit),
+         dict(paras=[f"{NAMES[0]} · slides 3–6"], **who)],
+        [dict(paras=["2"], **big), dict(paras=["Five more methods, from full fine-tuning to LoRA"], **tit),
+         dict(paras=[f"{NAMES[1]} · slides 7–12"], **who)],
+        [dict(paras=["3"], **big), dict(paras=["Our recipe: the prototype head, and why it works"], **tit),
+         dict(paras=[f"{NAMES[2]} · slides 13–16"], **who)],
+        [dict(paras=["4"], **big), dict(paras=["Final results, takeaways and limitations"], **tit),
+         dict(paras=[f"{NAMES[3]} · slides 17–21"], **who)],
+    ], [CARD, CARD, CARD_BLUE, CARD], gap=16, pad=16)
+    el.append(T(LEFT, bottom + 30, CONTENT_W, [[("Watch for one design choice: ", {"bold": True, "color": INK}),
+                                                ("how the new 10,000-class head is initialized. It matters for every method.",
+                                                 {})]], size=17, color=INK2, line=1.35))
+    footer(el, 2, "Speakers change at slides 7, 13 and 17")
+    slides.append(dict(bg=PAGE, el=el, notes=(
+        "Here is the plan. In part one I present the task, the data and the two simplest methods. In part two, "
+        f"{NAMES[1]} continues with five more methods, from full fine-tuning to LoRA, and compares all seven. In part three, "
+        f"{NAMES[2]} presents our recipe and why it works. In part four, {NAMES[3]} shows the final results and what we "
+        "learned.\n\nOne thing to watch for: how the new 10,000-class head is initialized. It turned out to matter for every "
+        "method we tried.")))
+
+    # 3. Task and data (speaker A)
+    el = []
+    ct = header(el, "Part 1 · The task", "One ViT, 10,000 classes, a fixed budget")
+    side = 318
+    el.append(image("data_examples.jpg", LEFT, ct + 2, side,
+                    "Sixteen training photos in a 4 by 4 grid, one class per row: a bird seen through a scope, as a flock, at "
+                    "a feeder and on reeds; a snake on rock, pavement, gravel and leaves; a moth on a wall, a leaf, close up "
+                    "and on fabric; a plant as flowers, fruit, a whole shrub and a branch."))
+    x0, cw = LEFT + side + 32, CONTENT_W - side - 32
+    y = ct + 6
+    for num, label in [("10,000", "fine-grained classes; the class names are hidden"),
+                       ("45", "training photos per class, 450,000 in total"),
+                       ("1.2 h", "per training run on one A100-80GB (2 h × 48 GB)")]:
+        n = T(x0, y, cw, [num], family="Georgia", size=32, bold=True, color=BLUE, line=1.1)
+        lab = T(x0, y + n["h"] + 2, cw, [label], size=15, color=INK2, line=1.3)
+        el += [n, lab]
+        y = lab["y"] + lab["h"] + 18
+    el.append(T(x0, y + 4, cw, ["Left: 4 of the classes, 4 of their 45 photos each. One class can be a single bird or a "
+                                "whole flock, a flower or a whole shrub."], size=13, color=MUTED, line=1.35))
+    footer(el, 3, "Base model: ViT-B/16, pretrained on ImageNet-21k and fine-tuned on ImageNet-1k (timm)")
+    slides.append(dict(bg=PAGE, el=el, notes=(
+        "The dataset has 10,000 fine-grained classes, and the class names are hidden. There are only 45 training photos per "
+        "class, 450,000 in total, so per class this is close to a few-shot problem.\n\nThe photos on the left show why it is "
+        "hard. Each row is one class. The same class can be a single bird or a whole flock, a close-up of a flower or a whole "
+        "shrub. So the model must learn a lot from very few, very different photos.\n\nThe backbone is fixed: ViT-B/16, "
+        "pretrained on ImageNet-21k. Every training run must fit in 2 hours on 48 GB of GPU memory. On one A100 with 80 GB, "
+        "that is 1.2 hours per run.")))
+
+    # 4. Starting point (speaker A)
+    el = []
+    ct = header(el, "Part 1 · Starting point", "We first reproduced the baselines")
+    tb = table(LEFT, ct + 2, [400, 144, 144, 144], [
         ["Reference baseline (project brief)", "Trainable", "Reference", "Ours (holdout)"],
         ["Zero-shot: prototype head, no training", "0%", "43.7%", "43.95%"],
         ["Full fine-tuning, 3 epochs", "100%", "70.8%", "70.88%"],
         ["LoRA r = 8 on qkv, 3 epochs", "0.34%", "68.3%", "68.57%"],
-    ], ["left", "right", "right", "right"], size=14)
+    ], ["left", "right", "right", "right"], size=15)
     el.append(tb)
-    el.append(T(LEFT, tb["y"] + tb["h"] + 14, CONTENT_W, [[("Holdout:", {"bold": True, "color": INK}),
-                                                           (" 2 training images per class (20,000). It tracks CodaBench val "
-                                                            "within 0.3 points.", {})]], size=14, color=INK2, line=1.3))
-    footer(el, 2, "Reference = numbers from a PhD student in the project brief")
+    el.append(T(LEFT, tb["y"] + tb["h"] + 26, CONTENT_W, [
+        [("Holdout: ", {"bold": True, "color": INK}), ("2 training photos per class (20,000); it tracks CodaBench val within "
+                                                       "0.3 points.", {})],
+        [("One protocol: ", {"bold": True, "color": INK}), ("all seven methods use the prototype head (Part 3), 3 epochs "
+                                                            "and the same A100.", {})],
+        [("Efficient methods: ", {"bold": True, "color": INK}), ("the brief suggests training a small share, for example "
+                                                                 "under 5%.", {})],
+    ], size=15, color=INK2, line=1.3, after=10, bullet=16))
+    footer(el, 4, "Reference = numbers from a PhD student in the project brief")
     slides.append(dict(bg=PAGE, el=el, notes=(
-        "The dataset has 10,000 fine-grained classes but only 45 training images per class, 450,000 images in total, so per "
-        "class it is close to few-shot. The backbone is fixed: ViT-B/16, pretrained on ImageNet-21k and fine-tuned on ImageNet-1k. "
-        "Every run must fit in 2 hours on 48 GB; on one A100 with 80 GB that is 1.2 hours per run. The brief suggests that "
-        "efficient methods train a small share of the parameters, for example under 5%.\n\nWe first reproduced the three reference "
-        "numbers from the brief: zero-shot 43.95 against 43.7, full fine-tuning 70.88 against 70.8, and LoRA on qkv 68.57 against "
-        "68.3. The validation labels are hidden, so we hold out 2 training images per class. Holdout agrees with CodaBench within "
-        "0.3 points, so the comparisons that follow use holdout.")))
+        "Before trying anything new, we reproduced the three reference numbers from the brief. Zero-shot gives 43.95% against "
+        "43.7, full fine-tuning for 3 epochs 70.88 against 70.8, and LoRA on the attention qkv projection 68.57 against 68.3. "
+        "So our pipeline matches the reference.\n\nThe validation labels are hidden, so we hold out 2 training photos per "
+        "class. This holdout agrees with CodaBench within 0.3 points, so all comparisons that follow use it.\n\nNext come seven "
+        "methods, from the simplest to the most complex. All of them use one protocol: the same head initialization, which "
+        "Part 3 explains, 3 epochs and the same GPU. The brief suggests that efficient methods train a small share of the "
+        "parameters, for example under 5%.")))
 
-    # 3–9. The seven methods, simplest first
-    method_slide(slides, 3, 0, "Linear probe: train only the head", "lp", [
+    # 5–11. The seven methods, simplest first (speakers A and B)
+    method_slide(slides, 5, 0, "Linear probe: train only the head", "lp", [
         ("Idea:", "freeze the whole backbone and train only the new 10,000-class head."),
         ("Setting:", "the head starts from class prototypes; 10 epochs on cached features, LR 1e-3."),
         ("Parameters:", "0 in the backbone. Head: 768 × 10,000 + 10,000 = 7.69M, trained in every method."),
         ("Result:", "61.94% holdout in 0.10 GPU-hours. The untrained prototype head alone: 43.95%."),
         ("Problem:", "the features never adapt to the new classes. Next: unfreeze the top blocks."),
     ], (
-        "We go from the simplest method to the most complex. Every method on the next seven slides uses the same protocol: the "
-        "same prototype-initialized head, 3 epochs, the same 20,000-image holdout and the same A100. The diagram shows what each "
-        "method trains in blue and what it freezes in grey. Read it like the classic AlexNet figure: the 3D boxes are tensors "
-        "with their sizes, and the rounded boxes are layers with their shapes and parameter counts.\n\nThe linear probe freezes the whole backbone and trains only the "
-        "new 10,000-class head on cached features. It needs no backbone gradients at all and takes 0.10 GPU-hours. It reaches "
-        "61.94%, up from 43.95% for the untrained prototype head. But the features never change, so this is a ceiling for frozen "
-        "features. Next we unfreeze the top blocks."))
+        "The diagram shows what each method trains in blue and what it freezes in grey. Read it like the classic AlexNet "
+        "figure: the 3D boxes are tensors with their sizes, and the rounded boxes are layers with their shapes and parameter "
+        "counts.\n\nThe linear probe freezes the whole backbone and trains only the new 10,000-class head on cached features. "
+        "It needs no backbone gradients and takes 0.10 GPU-hours. It reaches 61.94%, up from 43.95% for the untrained "
+        "prototype head. But the features never change, so this is a ceiling for frozen features. Next we unfreeze the top "
+        "blocks."))
 
-    method_slide(slides, 4, 1, "Partial fine-tuning: the last K blocks", "partial", [
+    method_slide(slides, 6, 1, "Partial fine-tuning: the last K blocks", "partial", [
         ("Idea:", "train the last K blocks and the final norm; freeze everything below them."),
         ("Setting:", "K = 1 and 2 at LR 3e-4; K = 4 and 6 use the full fine-tuning recipe."),
         ("Parameters:", "K × 7,087,872 + 1,536, so 8.26% (K = 1) to 49.6% (K = 6)."),
@@ -300,26 +354,26 @@ def build_slides():
         ("Problem:", "each extra block adds less, and the lower blocks never adapt. Next: train every block."),
     ], (
         "Partial fine-tuning unfreezes the last K transformer blocks plus the final norm. We tried K equal to 1, 2, 4 and 6. "
-        "Each block has about 7.09 million weights, so even one block is 8.3% of the backbone, already above the 5% the brief "
-        "gives as an example.\n\nAccuracy rises from 67.97% with one block to 72.89% with six, but each extra block adds less: "
-        "plus 6 points for the first block, plus 3 for the second, then about 1 point per two blocks. Note that K equal to 4 and "
-        "6 also use the full fine-tuning recipe, with a lower learning rate, layer decay and drop path.\n\nIt is cheap to train: "
-        "gradients only flow through the top blocks, so memory stays between 3.8 and 10 GB. The problem is that the lower blocks "
-        "never adapt. So next we train every block."))
+        "Each block has about 7.09 million weights, so even one block is 8.3% of the backbone.\n\nAccuracy rises from 67.97% "
+        "with one block to 72.89% with six, but each extra block adds less: plus 6 points for the first block, plus 3 for the "
+        "second, then about 1 point per two blocks. K equal to 4 and 6 also use the full fine-tuning recipe.\n\nIt is cheap to "
+        "train, between 3.8 and 10 GB, because gradients only flow through the top blocks. But the lower blocks never adapt."
+        f"\n\nHandoff: Partial fine-tuning cannot adapt the lower blocks. {NAMES[1]} will now train every block, and then "
+        "show cheaper ways to adapt all of them."))
 
-    method_slide(slides, 5, 2, "Full fine-tuning: the upper bound", "full", [
+    method_slide(slides, 7, 2, "Full fine-tuning: the upper bound", "full", [
         ("Idea:", "train every backbone weight together with the head."),
         ("Setting:", "LR 1e-4, layer-wise decay 0.75, drop path 0.1, weight decay 0.05."),
         ("Parameters:", "85,798,656 = 100% of the backbone, a 374 MB checkpoint per task."),
         ("Result:", "73.38% holdout, the best of all seven; 18.9 GB, 1,139 img/s, 0.48 GPU-hours."),
         ("Problem:", "every task stores a full copy of the model. Next: train far fewer weights."),
     ], (
-        "Full fine-tuning trains every weight. To keep the pretrained features, we use a small learning rate, 1e-4, that "
-        "shrinks by 0.75 per block toward the input, plus drop path.\n\nIt is the most accurate method in our comparison: 73.38% "
-        "on holdout. It is also the most expensive: 18.9 GB of training memory, and every task needs its own 374 MB checkpoint. "
-        "The rest of the ladder asks how close we can get while training far fewer weights."))
+        "Speaker B.\n\nFull fine-tuning trains every weight. To keep the pretrained features, we use a small learning rate, "
+        "1e-4, that shrinks by 0.75 per block toward the input, plus drop path.\n\nIt is the most accurate method in our "
+        "comparison: 73.38% on holdout. It is also the most expensive: 18.9 GB of training memory, and every task needs its "
+        "own 374 MB checkpoint. The next four methods ask how close we can get while training far fewer weights."))
 
-    method_slide(slides, 6, 3, "BitFit: train only the biases", "bitfit", [
+    method_slide(slides, 8, 3, "BitFit: train only the biases", "bitfit", [
         ("Idea:", "freeze every weight matrix; train only the bias terms and the head."),
         ("Setting:", "LR 1e-3, no weight decay."),
         ("Parameters:", "12 × 8,448 + 1,536 = 102,912 biases, only 0.120% of the backbone."),
@@ -327,13 +381,12 @@ def build_slides():
         ("Problem:", "too little capacity to close the gap. Next: add small trainable modules."),
     ], (
         "Now the parameter-efficient methods. From here on the diagram zooms into one of the 12 identical transformer blocks.\n\n"
-        "BitFit is the most extreme: it freezes every weight matrix and trains only the bias vectors, marked b. Per block that "
-        "is 8,448 numbers, plus the biases of the patch embedding and the final norm: 102,912 in total, 0.12% of the backbone.\n\n"
-        "With so little, it still reaches 69.81%, almost 8 points above the linear probe. Because it only changes numbers that "
-        "already exist, inference costs nothing extra. But it stays 3.6 points below full fine-tuning: it lacks capacity. So "
-        "next we add small trainable modules."))
+        "BitFit is the most extreme: it freezes every weight matrix and trains only the bias vectors, the blue tags. Per block "
+        "that is 8,448 numbers, plus the biases of the patch embedding and the final norm: 102,912 in total, 0.12% of the "
+        "backbone.\n\nWith so little, it still reaches 69.81%, almost 8 points above the linear probe, and inference costs "
+        "nothing extra. But it stays 3.6 points below full fine-tuning. So next we add small trainable modules."))
 
-    method_slide(slides, 7, 4, "Adapter: a bottleneck after each MLP", "adapter", [
+    method_slide(slides, 9, 4, "Adapter: a bottleneck after each MLP", "adapter", [
         ("Idea:", "insert a small bottleneck, 768 → 64 → 768, after each MLP, in series."),
         ("Setting:", "bottleneck 64, scale 1.0, LR 1e-3; the up-projection starts at zero."),
         ("Parameters:", "12 × (768 × 64 + 64 + 64 × 768 + 768) = 1,189,632 = 1.387%."),
@@ -343,160 +396,284 @@ def build_slides():
         "The Adapter adds a small bottleneck after the MLP of every block: down to 64 dimensions, a ReLU, and back up to 768, "
         "with its own skip connection. The up-projection starts at zero, so at the start the model is unchanged.\n\nThat is "
         "1.39% of the backbone, and accuracy rises to 71.54%. The cost shows at inference: the adapter is an extra layer in the "
-        "main path and cannot be folded into the frozen weights, so batch-1 latency goes from 7.33 to 9.74 ms.\n\nIt also "
-        "rewrites the MLP output directly. AdaptFormer, next, moves the same module to a side branch."))
+        "main path and cannot be folded into the frozen weights, so batch-1 latency goes from 7.33 to 9.74 ms. AdaptFormer, "
+        "next, moves the same module to a side branch."))
 
-    method_slide(slides, 8, 5, "AdaptFormer: a scaled side branch", "adaptformer", [
+    method_slide(slides, 10, 5, "AdaptFormer: a scaled side branch", "adaptformer", [
         ("Idea:", "run the same bottleneck beside the MLP and add its output, scaled by s."),
         ("Setting:", "bottleneck 64, s = 0.1, LR 1e-3."),
         ("Parameters:", "same as Adapter: 1,189,632 = 1.387% of the backbone."),
         ("Result:", "71.17% holdout, close to Adapter (71.54%); latency 10.23 ms."),
         ("Problem:", "neither adapter merges into the weights, so inference stays slower. Next: a mergeable update."),
     ], (
-        "AdaptFormer uses the same bottleneck, but in parallel with the MLP: the block input goes through both, and the adapter "
-        "output is added with a small scale, s equal to 0.1, so the original MLP output stays intact.\n\nSame parameter count, "
-        "and 71.17% on holdout. That is 0.37 below the serial Adapter, about the size of our run-to-run noise, so in our setting "
-        "the placement makes little difference. The two also use different scales, so this is not a pure placement test.\n\n"
+        "AdaptFormer uses the same bottleneck, but in parallel with the MLP, and adds its output with a small scale, s equal "
+        "to 0.1, so the original MLP output stays intact.\n\nSame parameter count, and 71.17% on holdout: 0.37 below the "
+        "serial Adapter, about the size of our run-to-run noise. So in our setting the placement makes little difference.\n\n"
         "Both adapters share one problem: they add layers at inference, about 30 to 40% more latency at batch size 1. We want "
         "an update that disappears after training. That is LoRA."))
 
-    method_slide(slides, 9, 6, "LoRA: a low-rank update that merges", "lora", [
+    method_slide(slides, 11, 6, "LoRA: a low-rank update that merges", "lora", [
         ("Idea:", "learn ΔW = BA beside each frozen linear layer; merge W + (α/r)·BA after training."),
         ("Setting:", "rank r = 8, α = 16, on qkv, proj, fc1 and fc2; LR 1e-3."),
         ("Parameters:", "12 × 8 × (3,072 + 1,536 + 3,840 + 3,840) = 1,179,648 = 1.375%."),
         ("Result:", "71.98% holdout (CodaBench 71.90%), best efficient method; 7.61 ms after merging."),
-        ("Problem:", "slowest training here (888 img/s, 19.9 GB). Next: our recipe, used by all seven."),
+        ("Problem:", "slowest training here (888 img/s, 19.9 GB). Next: all seven side by side."),
     ], (
         "LoRA learns a low-rank update next to each frozen linear layer: delta W equals B times A, with rank 8. For a layer with "
         "n inputs and m outputs that is 8 times n plus m weights. We put it on all four linear layers of every block, 1.375% "
-        "of the backbone.\n\nIt is the most accurate efficient method, 71.98% on holdout and 71.90% on CodaBench. And after "
-        "training we add BA into W, so the deployed model is exactly as fast as the original.\n\nIts cost is training: in our "
-        "runs it was the slowest method, 888 images per second, with the most memory, 19.9 GB, because of 96 extra small matrix "
-        "multiplications per forward pass, 8 per block, and their stored activations.\n\nAll seven methods used the same prototype head. Next: "
-        "what that head is, and what it is worth."))
+        "of the backbone.\n\nIt is the most accurate efficient method, 71.98% on holdout and 71.90% on CodaBench. After "
+        "training we add BA into W, so the deployed model is exactly as fast as the original.\n\nIts cost is training: it was "
+        "the slowest method here, 888 images per second, with the most memory, 19.9 GB, because of 96 extra small matrix "
+        "multiplications per forward pass and their stored activations."))
 
-    # 10. Our recipe and what the head is worth
+    # 12. All seven side by side (speaker B)
     el = []
-    ct = header(el, "Our method", "Our recipe: a prototype head first")
-    steps = [("1", "Extract features", "Run the frozen ViT once; keep each image's 768-d feature.", CARD, INK),
-             ("2", "Prototype head", "Class weight = normalized class-mean feature × 40. No training.", CARD_BLUE, BLUE),
+    ct = header(el, "Part 2 · Comparison", "Spread small changes over every block")
+    img = image("fig4_methods_params.png", (W - 760) / 2, ct, 760,
+                "Two scatter plots against trainable backbone parameters on a log axis. Left, holdout top-1: BitFit 69.8% at "
+                "0.12%; LoRA 72.0%, Adapter 71.5% and AdaptFormer 71.2% near 1.4%; the partial fine-tuning line rises from "
+                "68.0% at 8.3% (K = 1) to 72.9% at 49.6% (K = 6) and 73.4% at 100%. Right, peak training memory: BitFit "
+                "12.7 GB, Adapter and AdaptFormer 12.8 GB, LoRA 19.9 GB; partial fine-tuning 3.8, 4.1, 7.0 and 10.0 GB for "
+                "K = 1, 2, 4, 6, and full fine-tuning 18.9 GB.")
+    el.append(img)
+    el.append(T(LEFT, img["y"] + img["h"] + 12, CONTENT_W, [
+        "LoRA (1.375%) matches K = 4 (33%); BitFit (0.12%) beats K = 1 (8.26%).",
+        "Memory follows how far gradients flow back, not how many weights are trained.",
+    ], size=15, color=INK2, line=1.3, after=8, bullet=16))
+    footer(el, 12, PROTOCOL)
+    slides.append(dict(bg=PAGE, el=el, notes=(
+        "Here are all seven methods side by side. Left: accuracy against the share of trained weights, on a log scale. The "
+        "blue methods make small changes in every block; the grey line trains whole blocks from the top. The blue points sit "
+        "far to the left of the line: LoRA with 1.375% of the weights matches training the last four blocks, 33%, and BitFit "
+        "with 0.12% beats training the last block. So where the weights are matters more than how many.\n\nRight: peak "
+        "training memory. Partial fine-tuning adds about 1.5 GB per trained block; extended to all 12 blocks that gives 18.8 "
+        "GB, which is what full fine-tuning used. The blue methods train almost nothing, yet need 12.7 to 19.9 GB, because "
+        "their gradients must flow back to the first block.\n\nHandoff: LoRA is the best efficient method. But all seven runs "
+        f"shared one design choice, the prototype head. {NAMES[2]} will explain it.")))
+
+    # 13. Our recipe (speaker C)
+    el = []
+    ct = header(el, "Part 3 · Our method", "Our recipe: a prototype head first")
+    steps = [("1", "Extract features", "Run the frozen ViT once over all training photos; keep each 768-d feature.", CARD, INK),
+             ("2", "Prototype head", "Each class weight = its normalized mean feature × 40. No training.", CARD_BLUE, BLUE),
              ("3", "Fine-tune", "Any of the seven methods; we keep full fine-tuning and LoRA.", CARD, INK),
-             ("4", "Predict", "Full model: average the logits of each image and its flip.", CARD, INK)]
-    gap, pad = 34, 14
+             ("4", "Predict", "Full model: average the logits of each photo and its mirror image.", CARD, INK)]
+    gap, pad = 34, 16
     bw = (CONTENT_W - 3 * gap) / 4
-    built = [(T(0, 0, bw - 2 * pad, [title], size=15, bold=True, line=1.2),
-              T(0, 0, bw - 2 * pad, [body], size=13, color=INK2, line=1.3)) for _, title, body, _, _ in steps]
-    bh = max(pad + 24 + 10 + tt["h"] + 6 + tbd["h"] + pad for tt, tbd in built)
-    y0 = ct + 2
+    built = [(T(0, 0, bw - 2 * pad, [title], size=17, bold=True, line=1.2),
+              T(0, 0, bw - 2 * pad, [body], size=15, color=INK2, line=1.3)) for _, title, body, _, _ in steps]
+    bh = max(pad + 28 + 12 + tt["h"] + 8 + tbd["h"] + pad for tt, tbd in built)
+    y0 = ct + 8
     for i, ((n, _, _, fill, badge), (tt, tbd)) in enumerate(zip(steps, built)):
         x = LEFT + i * (bw + gap)
         el.append(rect(x, y0, bw, bh, fill, radius=10))
-        el.append(oval(x + pad, y0 + pad, 24, badge, label=n))
-        tt["x"], tt["y"] = x + pad, y0 + pad + 24 + 10
-        tbd["x"], tbd["y"] = x + pad, tt["y"] + tt["h"] + 6
+        el.append(oval(x + pad, y0 + pad, 28, badge, label=n))
+        tt["x"], tt["y"] = x + pad, y0 + pad + 28 + 12
+        tbd["x"], tbd["y"] = x + pad, tt["y"] + tt["h"] + 8
         el += [tt, tbd]
         if i < 3:
             el.append(arrow(x + bw + 8, y0 + bh / 2 - 8, gap - 16, 16, GRAY))
-    tb = table(LEFT, y0 + bh + 20, [392, 150, 150, 140], [
-        ["Same run, only the head changes", "Linear-probe head", "Prototype head", "Gain"],
-        ["Full fine-tuning, 3 epochs", "70.88%", "73.38%", "+2.50"],
-        ["LoRA on all linear layers, 3 epochs", "69.45%", "71.98%", "+2.53"],
-        ["AdaptFormer, 3 epochs", "69.05%", "71.17%", "+2.12"],
-        ["Full FT, 8 epochs, all data, flip TTA (CodaBench)", "73.10%", "76.22%", "+3.12"],
-    ], ["left", "right", "right", "right"], size=14, highlight=(4,), bold_rows=(4,))
-    el.append(tb)
-    el.append(T(LEFT, tb["y"] + tb["h"] + 12, CONTENT_W, ["A random head ties the prototype head (71.95% vs 72.00%, LoRA): "
-                                                          "only the linear-probe head hurts."], size=14, color=INK2, line=1.3))
-    footer(el, 10, "First three rows: holdout. Last row: CodaBench val.")
+    el.append(T(LEFT, y0 + bh + 30, CONTENT_W, [
+        [("Good start: ", {"bold": True, "color": INK}), ("each logit ≈ 40 × cosine(photo, class mean), so the head "
+                                                          "alone already gets 44%.", {})],
+        [("Used everywhere: ", {"bold": True, "color": INK}), ("all seven methods in Parts 1 and 2 started from this head.",
+                                                               {})],
+    ], size=15, color=INK2, line=1.35, after=10, bullet=16))
+    footer(el, 13)
     slides.append(dict(bg=PAGE, el=el, notes=(
-        "Here is our recipe. Step one: run the frozen backbone once over all training images and keep the 768-dimensional "
-        "features. Step two, the key choice: each class weight in the new head is the normalized mean feature of that class, "
-        "times a temperature of 40. No gradient steps. Step three: fine-tune with any of the seven methods; we keep full "
-        "fine-tuning and LoRA. Step four: for the full model we average the logits of each image and its flip.\n\nThe common "
-        "alternative, from LP-FT, is to train a linear probe first and then fine-tune. The table compares the two heads with "
-        "everything else fixed. The prototype head wins every time: plus 2.5 for full fine-tuning, plus 2.5 for LoRA, plus 2.1 "
-        "for AdaptFormer, and plus 3.1 for our final setting on CodaBench. A random head ends level with the prototype head, so "
-        "the problem is specifically the linear-probe head.")))
+        "Speaker C.\n\nHere is our recipe. Step one: run the frozen backbone once over all training photos and keep the "
+        "768-dimensional features. Step two, the key choice: each class weight in the new head is the normalized mean feature "
+        "of that class, times a temperature of 40. No gradient steps at all. Each logit is then about 40 times the cosine "
+        "between a photo and its class mean, so the head already reaches 44% before any training. A random head would start "
+        "with no class knowledge at all, at a loss of about 9.2.\n\nStep three: fine-tune "
+        "with any of the seven methods; we keep full fine-tuning and LoRA. Step four: for the full model we average the logits "
+        "of each photo and its mirror image.")))
 
-    # 11. Why the linear-probe head hurts
+    # 14. What the prototype head is worth (speaker C)
     el = []
-    ct = header(el, "Our method · why it works", "Linear-probe heads start high, finish low")
+    ct = header(el, "Part 3 · Our method", "Prototype heads win in every pair")
+    img = image("fig5_head_pairs.png", LEFT, ct + 2, CONTENT_W,
+                "Dumbbell chart of top-1 with a linear-probe head and with a prototype head, same run otherwise. Full "
+                "fine-tuning, 3 epochs, holdout: 70.88 to 73.38 (+2.50). LoRA on all linear layers, 3 epochs, holdout: 69.45 to "
+                "71.98 (+2.53). AdaptFormer, 3 epochs, holdout: 69.05 to 71.17 (+2.12). Full fine-tuning, 8 epochs, all data, "
+                "flip TTA, CodaBench val: 73.10 to 76.22 (+3.12).")
+    el.append(img)
+    el.append(T(LEFT, img["y"] + img["h"] + 10, CONTENT_W, [
+        "Each pair changes only the head initialization; everything else is identical.",
+        "A random head ties the prototype head (71.95% vs 72.00%, LoRA): only the linear-probe head hurts.",
+    ], size=15, color=INK2, line=1.3, after=8, bullet=16))
+    footer(el, 14, "Orange = linear-probe head, blue = prototype head")
+    slides.append(dict(bg=PAGE, el=el, notes=(
+        "The common alternative, from LP-FT, is to train a linear probe on frozen features first and then fine-tune. It starts "
+        "much stronger: 62% against 44%. This chart compares the two heads with everything else fixed.\n\nThe prototype head "
+        "wins every time: plus 2.5 for full fine-tuning, plus 2.5 for LoRA, plus 2.1 for AdaptFormer, and plus 3.1 for our "
+        "final setting on CodaBench. The gain shows up for every method, whether it trains all weights or only 1.4% of them."
+        "\n\nWe also tried a random head: it ends level with the prototype head, so the problem is specifically the "
+        "linear-probe head. The next slide shows why.")))
+
+    # 15. Why the linear-probe head hurts (speaker C)
+    el = []
+    ct = header(el, "Part 3 · Why it works", "Linear-probe heads start high, finish low")
     img = image("fig2_head_init_holdout.png", (W - 640) / 2, ct, 640,
                 "Line charts of holdout top-1 accuracy by epoch. Full fine-tuning: the linear-probe head goes from 62.1% "
                 "before training to 70.9% after 3 epochs, the prototype head from 44.0% to 73.4%. LoRA on all linear "
                 "layers: linear-probe head 62.1% to 69.6%, prototype head 44.0% to 72.0%.")
     el.append(img)
     el.append(T(LEFT, img["y"] + img["h"] + 12, CONTENT_W, [
-        "The linear-probe head was trained on these same images, so it starts at 62%.",
+        "The linear-probe head was trained on these same photos, so it starts at 62%.",
         "Its loss starts low (2.29 vs 4.39), so little gradient reaches the backbone.",
         "In all four pairs it ends with lower training loss but lower accuracy: memorization.",
     ], size=14, color=INK2, line=1.3, after=5, bullet=16))
-    footer(el, 11, "Blue = prototype head, orange = linear-probe head; “head only” = before any training")
+    footer(el, 15, "Blue = prototype head, orange = linear-probe head; “head only” = before any training")
     slides.append(dict(bg=PAGE, el=el, notes=(
         "Why does the stronger start lose? The leftmost point is the head on its own: the linear-probe head starts at 62%, far "
         "above the prototype head at 44%. After one epoch the prototype run has caught up, and it stays ahead.\n\nOur "
         "explanation, consistent with the logs: the linear-probe head was trained on frozen features of the very same training "
-        "images, so it already fits them. The first training loss is low, 2.29 against 4.39 in the LoRA runs, so only a weak "
-        "gradient reaches the backbone. And in all four pairs, the linear-probe run ends with a lower training loss but a lower "
-        "accuracy, which is memorization. With only 43 to 45 images per class, fitting the head on the training images is a "
+        "photos, so it already fits them. The first training loss is low, 2.29 against 4.39 in the LoRA runs, so only a weak "
+        "gradient reaches the backbone. And in all four pairs the linear-probe run ends with a lower training loss but a lower "
+        "accuracy, which is memorization. With only 43 to 45 photos per class, fitting the head on the training photos is a "
         "liability.")))
 
-    # 12. Ablations
+    # 16. Ablations (speaker C)
     el = []
-    ct = header(el, "Ablations", "LoRA needs capacity; full FT needs epochs")
-    tb = table(LEFT, ct + 2, [452, 130, 130, 120], [
-        ["One change at a time", "Before", "After", "Change"],
-        ["LoRA, lp head: LR 1e-3 → 5e-4 (qkv only)", "68.57%", "68.45%", "−0.12"],
-        ["LoRA, lp head: qkv only → all linear layers", "68.57%", "69.45%", "+0.88"],
-        ["LoRA, proto head: 3 → 6 epochs", "71.98%", "71.52%", "−0.46"],
-        ["Full FT, proto head, all data, flip TTA: 3 → 8 epochs *", "74.01%", "76.22%", "+2.21"],
-        ["Full FT, lp head, 8 epochs: + flip TTA *", "72.57%", "72.84%", "+0.27"],
-        ["Full FT, lp head, 8 epochs, TTA: 43 → 45 images per class *", "72.84%", "73.10%", "+0.26"],
-    ], ["left", "right", "right", "right"], size=14, highlight=(2, 4), bold_rows=(2, 4))
-    el.append(tb)
-    el.append(T(LEFT, tb["y"] + tb["h"] + 18, CONTENT_W, [
+    ct = header(el, "Part 3 · Ablations", "LoRA needs capacity; full FT needs epochs")
+    img = image("fig6_ablations.png", LEFT, ct + 2, CONTENT_W,
+                "Horizontal bars of the change in top-1 points, one change at a time. LoRA capacity (linear-probe head, 3 "
+                "epochs, holdout): learning rate 1e-3 to 5e-4, −0.12 (68.57 to 68.45); qkv only to all four linear layers, "
+                "+0.88 (68.57 to 69.45). Training length (prototype head): LoRA 3 to 6 epochs, −0.46 (71.98 to 71.52); full "
+                "fine-tuning 3 to 8 epochs, +2.21 (74.01 to 76.22). Final-model steps (full fine-tuning, 8 epochs, CodaBench "
+                "val): flip TTA +0.27 (72.57 to 72.84); 43 to 45 images per class +0.26 (72.84 to 73.10).")
+    el.append(img)
+    el.append(T(LEFT, img["y"] + img["h"] + 8, CONTENT_W, [
         "LoRA is limited by capacity, not learning rate: let it adapt the MLP too.",
         "Full fine-tuning keeps gaining with epochs; LoRA starts to memorize after about 3.",
     ], size=15, color=INK2, line=1.3, after=8, bullet=16))
-    footer(el, 12, "* CodaBench val; other rows: holdout. lp = linear-probe head, proto = prototype head")
+    footer(el, 16, "Blue = gain, grey = loss; holdout unless marked val (CodaBench)")
     slides.append(dict(bg=PAGE, el=el, notes=(
         "Ablations on the other parts of the recipe, one change at a time.\n\nFor LoRA, halving the learning rate changed "
         "nothing, minus 0.12, within noise. Putting LoRA on all four linear layers instead of only qkv added 0.88 points. So "
         "LoRA is limited by where it has capacity, not by its learning rate.\n\nTraining length behaves in opposite ways. Full "
-        "fine-tuning gains 2.2 points from 3 to 8 epochs, which is how we spend the budget for the final model. LoRA with the "
-        "prototype head is 0.46 worse at 6 epochs than at 3: at learning rate 1e-3 it starts to memorize, so we stop it at 3 "
-        "epochs.\n\nThe last two rows are small steps for the final model: flip test-time augmentation plus 0.27, and training "
-        "on all 45 images per class plus 0.26, at the edge of noise but in the expected direction.")))
+        "fine-tuning gains 2.2 points from 3 to 8 epochs, which is how we spend the budget for the final model. LoRA is 0.46 "
+        "worse at 6 epochs than at 3: at learning rate 1e-3 it starts to memorize, so we stop it at 3.\n\nThe last two bars "
+        "are small steps for the final model: flip test-time augmentation, plus 0.27, and all 45 photos per class, plus 0.26."
+        f"\n\nHandoff: With the recipe fixed, {NAMES[3]} will show the final models and the test results.")))
 
-    # 13. Final results
+    # 17. Final results (speaker D)
     el = []
-    ct = header(el, "Final models", "Final results, inside the compute budget")
-    tb = table(LEFT, ct + 2, [262, 96, 70, 82, 104, 100, 118], [
-        ["Model", "CodaBench val", "Test", "Trainable", "Latency bs1", "GPU-hours", "Peak VRAM"],
-        ["Reference: full fine-tuning", "70.8%", "–", "100%", "–", "–", "–"],
-        ["Reference: LoRA", "68.3%", "–", "0.34%", "–", "–", "–"],
-        ["Ours: full FT, proto head, 8 epochs, all data, flip TTA", "76.22%", PLACEHOLDER, "100%", "14.95 ms *", "1.03 h",
-         "18.9 GB"],
-        ["Ours: LoRA on all linear layers, proto head, 3 epochs", "71.90%", PLACEHOLDER, "1.375%", "7.61 ms", "0.54 h",
-         "19.9 GB"],
-    ], ["left"] + ["right"] * 6, size=14, highlight=(3, 4), bold_rows=(3, 4))
-    el.append(tb)
-    el.append(T(LEFT, tb["y"] + tb["h"] + 18, CONTENT_W, [
-        "Full fine-tuning: +5.4 over the reference, using 1.03 of the 1.2 allowed GPU-hours.",
-        "LoRA: +3.6 over the reference LoRA, training 1.375% of the backbone.",
-        "* Flip TTA runs two forward passes per image; one pass takes 7.35 ms.",
+    ct = header(el, "Part 4 · Final models", "Final results on the hidden test set")
+    sub = dict(size=13, color=INK2, line=1.3, gap=12)
+    big = dict(family="Georgia", size=46, bold=True, color=BLUE, line=1.05, gap=2)
+    cap = dict(size=12, color=MUTED, line=1.2, gap=12)
+    val = dict(size=15, color=INK, line=1.3, gap=6)
+    cost = dict(size=13, color=INK2, line=1.3)
+    bottom = card_row(el, ct + 4, [
+        [dict(paras=["Full fine-tuning"], size=17, bold=True, line=1.2, gap=4),
+         dict(paras=["prototype head, 8 epochs, all data, flip TTA"], **sub),
+         dict(paras=[TEST_FULL], **big), dict(paras=["test top-1"], **cap),
+         dict(paras=["val 76.22% · reference 70.8%"], **val),
+         dict(paras=["1.03 GPU-hours · 18.9 GB · 14.95 ms per photo (two passes)"], **cost)],
+        [dict(paras=["LoRA, 1.375% of the weights"], size=17, bold=True, line=1.2, gap=4),
+         dict(paras=["all linear layers, prototype head, 3 epochs"], **sub),
+         dict(paras=[TEST_LORA], **big), dict(paras=["test top-1"], **cap),
+         dict(paras=["val 71.90% · reference LoRA 68.3%"], **val),
+         dict(paras=["0.54 GPU-hours · 19.9 GB · 7.61 ms per photo after merging"], **cost)],
+    ], [CARD_BLUE, CARD], gap=24, pad=20)
+    el.append(T(LEFT, bottom + 22, CONTENT_W, [
+        "Test is within 0.25 points of val for both models, so our holdout choices held up.",
+        "On val, +5.4 and +3.6 points over the reference numbers; both runs fit the 1.2 h budget.",
     ], size=15, color=INK2, line=1.3, after=8, bullet=16))
-    footer(el, 13, "Trainable = share of the 85.8M-parameter backbone; the 7.69M-parameter head is extra")
+    footer(el, 17, "Latency: batch 1, bf16, A100. Flip TTA runs two forward passes; one pass takes 7.35 ms")
     slides.append(dict(bg=PAGE, el=el, notes=(
-        "The two final models next to the references, on every metric the brief asks for.\n\nFull fine-tuning with the "
-        "prototype head, 8 epochs, all data and flip TTA reaches 76.22% on CodaBench val, 5.4 points above the reference, in "
-        "1.03 of the 1.2 allowed GPU-hours. Its latency is 14.95 ms because of the two TTA passes; one pass takes 7.35 ms.\n\n"
-        "Our LoRA model trains 1.375% of the backbone and reaches 71.90%, 3.6 points above the reference LoRA, in 0.54 "
-        "GPU-hours. After merging it is as fast as the base model.\n\nThe test column is filled in after Phase 2.")))
+        f"Speaker D.\n\nHere are our two final models on the hidden test set. Full fine-tuning with the prototype head, 8 "
+        f"epochs on all data and flip test-time augmentation reaches {TEST_FULL} on test and 76.22% on val, 5.4 points above "
+        "the reference. It used 1.03 of the 1.2 allowed GPU-hours.\n\nOur LoRA model trains 1.375% of the backbone and reaches "
+        f"{TEST_LORA} on test and 71.90% on val, 3.6 points above the reference LoRA, in 0.54 GPU-hours. After merging it is as "
+        "fast as the base model.\n\nFor both models the test score is within 0.25 points of val, so the choices we made on "
+        "our holdout carried over to unseen data. Both models were fixed before the test set was released, and each got one "
+        "of our two Phase 2 submissions.")))
 
-    # 14. Summary table
+    # 18. The path to the final score (speaker D)
     el = []
-    ct = header(el, "Summary", "Seven methods, one protocol")
+    ct = header(el, "Part 4 · Results", "72.57% to 76.22%, one change at a time")
+    figure_with_caption(el, "fig1_codabench_progression.png", ct,
+                        "CodaBench val top-1. Each step changes one setting; grey is the reference from the brief. The axis "
+                        "starts at 70% because the dots encode position, not length.",
+                        "Dot plot of CodaBench val top-1: reference 70.80%; full fine-tuning with the linear-probe head, 43 images "
+                        "per class, 8 epochs 72.57%; plus flip TTA 72.84% (+0.27); plus all 45 images per class 73.10% (+0.26); "
+                        "plus the prototype head, the final model, 76.22% (+3.12).")
+    footer(el, 18)
+    slides.append(dict(bg=PAGE, el=el, notes=(
+        "How did we get to 76.22%? This is the path, one change per step, with full fine-tuning for 8 epochs throughout. With "
+        "the linear-probe head we scored 72.57%, already above the 70.8% reference. Flip TTA added 0.27, and all 45 photos per "
+        "class added 0.26. Then switching only the head to prototypes added 3.12 points, more than everything before it "
+        "combined.")))
+
+    # 19. Takeaways (speaker D)
+    el = []
+    el.append(T(LEFT, 60, CONTENT_W, ["Takeaways"], family="Georgia", size=36, bold=True, color=DARK_TEXT, line=1.12, role="title"))
+    y = 128
+    for i, (text, color) in enumerate([
+            ("Start the head from class prototypes: +2.1 to +3.1 points for every method we tried.", DARK_BLUE),
+            ("Spread capacity over all blocks: LoRA at 1.375% matches partial fine-tuning at 33%.", DARK_BLUE),
+            ("Training memory follows how far gradients flow back, not the number of trained weights.", DARK_BLUE),
+            ("Full fine-tuning is most accurate; LoRA is the best efficient method, at no inference cost.", DARK_BLUE),
+            (f"Test: {TEST_FULL} (full) and {TEST_LORA} (LoRA), within 0.25 points of val, inside the budget.",
+             DARK_ORANGE)], 1):
+        el.append(T(LEFT, y - 5, 40, [str(i)], family="Georgia", size=28, bold=True, color=color, line=1.1))
+        t = T(LEFT + 52, y, CONTENT_W - 52, [text], size=19, color=DARK_TEXT, line=1.3, role="point")
+        el.append(t)
+        y += t["h"] + 22
+    footer(el, 19, dark=True)
+    slides.append(dict(bg=DARK, el=el, notes=(
+        "To sum up in five points. One: start the 10,000-class head from class prototypes, not a linear probe; that is worth "
+        "2.1 to 3.1 points for every method we tried. Two: spread the trainable weights over all blocks; LoRA at 1.375% matches "
+        "training a third of the network. Three: training memory follows how far gradients flow back, not how many weights you "
+        "train. Four: full fine-tuning is the most accurate, and LoRA is the best efficient method and costs nothing at "
+        f"inference after merging. Five: on the test set, {TEST_FULL} and {TEST_LORA}, within 0.25 points of val and inside "
+        "the budget.")))
+
+    # 20. Limitations and future work (speaker D)
+    el = []
+    ct = header(el, "Part 4 · Limitations", "What we did not test, and what comes next")
+    head3 = dict(size=17, bold=True, line=1.2, gap=12)
+    items = dict(size=15, color=INK2, line=1.35, after=10, bullet=16)
+    card_row(el, ct + 4, [
+        [dict(paras=["Limitations"], **head3),
+         dict(paras=["One seed per setting; holdout noise is about ±0.3 points.",
+                     "One learning rate (1e-3) for all efficient methods, not tuned per method.",
+                     "Partial K = 4, 6 and the two adapters change more than one setting."], **items)],
+        [dict(paras=["Future work"], **head3),
+         dict(paras=["Prompt methods: VPT and prefix tuning.",
+                     "Higher input resolution and larger budgets.",
+                     "A controlled test of why the linear-probe head hurts."], **items)],
+    ], [CARD, CARD_BLUE], gap=24, pad=22)
+    footer(el, 20)
+    slides.append(dict(bg=PAGE, el=el, notes=(
+        "Some limits of our study. Every setting was trained once, and our holdout has a noise level of about 0.3 points, so "
+        "small differences should be read with care. All efficient methods share one learning rate that we did not tune per "
+        "method; each run costs up to 1.2 GPU-hours, so we chose more settings over more seeds. And partial fine-tuning with "
+        "4 and 6 blocks, and the two adapters, differ in more than one setting.\n\nNext "
+        "steps: prompt-based methods such as VPT and prefix tuning, higher input resolution, and a controlled experiment on why "
+        "the linear-probe head hurts. Our explanation fits the logs, but it is not yet a proof.")))
+
+    # 21. Thank you (speaker D leads the questions)
+    el = []
+    el.append(T(LEFT, 64, 700, ["CS604 · Team 06"], size=14, bold=True, color=EYEBROW, spacing=2, caps=True))
+    for i, c in enumerate([GRAY, BLUE, ORANGE]):
+        el.append(oval(852 + i * 16, 66, 10, c))
+    t = T(LEFT, 196, CONTENT_W, ["Thank you"], family="Georgia", size=60, bold=True, color=INK, line=1.05, role="title")
+    el.append(t)
+    el.append(T(LEFT, t["y"] + t["h"] + 18, CONTENT_W, ["Questions are welcome."], size=22, color=INK2, line=1.3))
+    el.append(T(LEFT, 468, CONTENT_W, [" · ".join(NAMES)], size=14, color=INK2, pinned=True))
+    slides.append(dict(bg=CARD, el=el, big_title=True, notes=(
+        f"Thank you. We are happy to take questions.\n\n{NAMES[3]} takes the questions and passes each one to the right "
+        f"person: the task, data and simple methods to {NAMES[0]}; the PEFT methods and the comparison to {NAMES[1]}; the "
+        f"prototype head and the ablations to {NAMES[2]}; results and limitations to {NAMES[3]}. The backup slides have all "
+        "seven methods in one table and the implementation details.")))
+
+    # 22. Backup: all seven methods in one table
+    el = []
+    ct = header(el, "Backup", "Seven methods, one protocol")
     tb = table(LEFT, ct + 2, [168, 128, 118, 112, 186, 120], [
         ["Method", "Trainable params", "% of backbone", "Train memory", "Inference overhead", "Holdout top-1"],
         ["Linear probe", "0", "0%", "3.2 GB", "none", "61.94%"],
@@ -514,76 +691,13 @@ def build_slides():
     el.append(T(LEFT, tb["y"] + tb["h"] + 12, CONTENT_W, ["Overhead is against the plain model (7.33 ms at batch 1). Peak "
                                                           "memory for K = 1 comes from feature extraction."],
                 size=13, color=MUTED, line=1.3))
-    footer(el, 14, PROTOCOL)
+    footer(el, 22, PROTOCOL)
     slides.append(dict(bg=PAGE, el=el, notes=(
-        "All seven methods in one table, with the columns the brief asks for.\n\nFull fine-tuning is the most accurate, 73.38%. "
-        "Among the efficient methods LoRA is the most accurate, 71.98%, and after merging it adds nothing at inference. The two "
-        "adapters add 1.19 million weights and 2.4 to 2.9 ms per image. BitFit is the smallest by far, 0.12%, and still beats "
-        "partial fine-tuning of one block.\n\nThe memory column holds a surprise, which the next slide explains: the methods "
-        "that train the fewest weights do not use the least memory.")))
+        "Backup: all seven methods in one table, with the columns the brief asks for. Full fine-tuning is the most accurate, "
+        "73.38%. Among the efficient methods LoRA is the most accurate, 71.98%, and after merging it adds nothing at inference. "
+        "The two adapters add 1.19 million weights and 2.4 to 2.9 ms per photo. BitFit is the smallest, 0.12%.")))
 
-    # 15. Accuracy and memory against trainable parameters
-    el = []
-    ct = header(el, "Summary", "Spread small changes over every block")
-    img = image("fig4_methods_params.png", (W - 760) / 2, ct, 760,
-                "Two scatter plots against trainable backbone parameters on a log axis. Left, holdout top-1: BitFit 69.8% at "
-                "0.12%; LoRA 72.0%, Adapter 71.5% and AdaptFormer 71.2% near 1.4%; the partial fine-tuning line rises from "
-                "68.0% at 8.3% (K = 1) to 72.9% at 49.6% (K = 6) and 73.4% at 100%. Right, peak training memory: BitFit "
-                "12.7 GB, Adapter and AdaptFormer 12.8 GB, LoRA 19.9 GB; partial fine-tuning 3.8, 4.1, 7.0 and 10.0 GB for "
-                "K = 1, 2, 4, 6, and full fine-tuning 18.9 GB.")
-    el.append(img)
-    el.append(T(LEFT, img["y"] + img["h"] + 12, CONTENT_W, [
-        "LoRA (1.375%) matches K = 4 (33%); BitFit (0.12%) beats K = 1 (8.26%).",
-        "Memory follows how far gradients flow back, not how many weights are trained.",
-    ], size=15, color=INK2, line=1.3, after=8, bullet=16))
-    footer(el, 15, PROTOCOL)
-    slides.append(dict(bg=PAGE, el=el, notes=(
-        "Two findings from the comparison. Left: accuracy against the share of trained weights, on a log scale. The blue methods "
-        "make small changes in every block; the grey line trains whole blocks from the top. The blue points sit far to the left "
-        "of the line: LoRA with 1.375% of the weights matches training the last four blocks, which is 33%, and BitFit with "
-        "0.12% beats training the last block, 8.3%. So where the weights are matters more than how many.\n\nRight: peak "
-        "training memory. Partial fine-tuning adds about 1.5 GB per trained block; extended to all 12 blocks that gives 18.8 "
-        "GB, which is what full fine-tuning used. The blue methods train almost nothing, yet need 12.7 to 19.9 GB, because "
-        "their gradients must flow back to the first block. Memory follows how far gradients flow back, not how many weights "
-        "are trained.")))
-
-    # 16. Takeaways
-    el = []
-    el.append(T(LEFT, 60, CONTENT_W, ["Takeaways"], family="Georgia", size=36, bold=True, color=DARK_TEXT, line=1.12, role="title"))
-    y = 128
-    for i, (text, color) in enumerate([
-            ("Start the head from class prototypes: +2.1 to +3.1 points for every method we tried.", DARK_BLUE),
-            ("Spread capacity over all blocks: LoRA at 1.375% matches partial fine-tuning at 33%.", DARK_BLUE),
-            ("Training memory follows how far gradients flow back, not the number of trained weights.", DARK_BLUE),
-            ("Full fine-tuning is most accurate; LoRA is the best efficient method, at no inference cost.", DARK_BLUE),
-            ("Final: 76.22% (full) and 71.90% (LoRA) on CodaBench val, inside the budget.", DARK_ORANGE)], 1):
-        el.append(T(LEFT, y - 5, 40, [str(i)], family="Georgia", size=28, bold=True, color=color, line=1.1))
-        t = T(LEFT + 52, y, CONTENT_W - 52, [text], size=19, color=DARK_TEXT, line=1.3, role="point")
-        el.append(t)
-        y += t["h"] + 22
-    footer(el, 16, dark=True)
-    slides.append(dict(bg=DARK, el=el, notes=(
-        "To sum up. One: start the 10,000-class head from class prototypes, not a linear probe; that is worth 2.1 to 3.1 points "
-        "for every method we tried. Two: spread the trainable weights over all blocks; LoRA at 1.375% matches training a third "
-        "of the network. Three: training memory follows how far gradients flow back, not how many weights you train. Four: full "
-        "fine-tuning is the most accurate, and LoRA is the best efficient method and costs nothing at inference after merging. "
-        "And the outcome: 76.22% and 71.90% on CodaBench val, both inside the budget.")))
-
-    # 17. Thank you
-    el = []
-    el.append(T(LEFT, 64, 700, ["CS604 · Team 06"], size=14, bold=True, color=EYEBROW, spacing=2, caps=True))
-    for i, c in enumerate([GRAY, BLUE, ORANGE]):
-        el.append(oval(852 + i * 16, 66, 10, c))
-    t = T(LEFT, 196, CONTENT_W, ["Thank you"], family="Georgia", size=60, bold=True, color=INK, line=1.05, role="title")
-    el.append(t)
-    el.append(T(LEFT, t["y"] + t["h"] + 18, CONTENT_W, ["Questions are welcome."], size=22, color=INK2, line=1.3))
-    el.append(T(LEFT, 468, CONTENT_W, ["[Member names]"], size=14, color=INK2, pinned=True))
-    slides.append(dict(bg=CARD, el=el, big_title=True, notes=(
-        "Thank you. We are happy to take questions. Likely questions: why prototypes beat the linear probe, why LoRA was not "
-        "faster to train, and whether the gains hold on the test set. The backup slides have the exact hyperparameters, how we "
-        "counted GPU time, and the step-by-step path to 76.22%.")))
-
-    # 18. Backup: implementation details
+    # 23. Backup: implementation details
     el = []
     ct = header(el, "Backup", "Implementation details and budget accounting")
     colw = (CONTENT_W - 32) / 2
@@ -604,27 +718,12 @@ def build_slides():
         h3 = T(x, ct + 2, colw, [head], size=16, bold=True, line=1.2)
         el.append(h3)
         el.append(T(x, h3["y"] + h3["h"] + 10, colw, items, size=14, color=INK2, line=1.25, after=8, bullet=14))
-    footer(el, 18)
+    footer(el, 23)
     slides.append(dict(bg=PAGE, el=el, notes=(
         "Backup slide for questions about implementation. Left: the training recipe. Right: how we measured. GPU time counts "
         "everything that uses the GPU for training, including the feature extraction for the prototype head, but not unpacking "
         "data, saving checkpoints or the final prediction. Latency uses random input, forward pass only, bf16, batch size 1; "
         "identical models differ by about 0.5 ms between runs.")))
-
-    # 19. Backup: the path to the final score
-    el = []
-    ct = header(el, "Backup", "72.57% to 76.22%, one change at a time")
-    figure_with_caption(el, "fig1_codabench_progression.png", ct,
-                        "CodaBench val top-1. Each step changes one setting; grey is the reference from the brief. The axis "
-                        "starts at 70% because the dots encode position, not length.",
-                        "Dot plot of CodaBench val top-1: reference 70.80%; full fine-tuning with the linear-probe head, 43 images "
-                        "per class, 8 epochs 72.57%; plus flip TTA 72.84% (+0.27); plus all 45 images per class 73.10% (+0.26); "
-                        "plus the prototype head, the final model, 76.22% (+3.12).")
-    footer(el, 19)
-    slides.append(dict(bg=PAGE, el=el, notes=(
-        "The path to our final CodaBench score, one change per step, with full fine-tuning for 8 epochs throughout. The "
-        "linear-probe head scored 72.57%; flip TTA added 0.27; all 45 images per class added 0.26; switching only the head to "
-        "prototypes added 3.12, more than everything before it combined.")))
     return slides
 
 

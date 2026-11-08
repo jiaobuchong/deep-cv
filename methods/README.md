@@ -60,6 +60,38 @@ Main findings:
 - No PEFT method beats full fine-tuning.
 - Zero-shot gives exactly the same result as the main notebook in September (43.95%), and the linear probe differs by only 0.13 (61.94% vs 62.07%). So these notebooks agree with the main notebook.
 
+## Extra checks after the deadline: `08_linear_exp.ipynb`
+
+Two cheap checks for the report, not for submission. Both reuse the code of 07 and train no backbone.
+
+- **Direction 1, backbone version**: zero-shot and linear probe with two checkpoints that stop after ImageNet-21k (`augreg_in21k`, `orig_in21k`), compared with our `augreg2_in21k_ft_in1k` (43.95% / 61.94%).
+- **Direction 2, test resolution**: the trained run `1019_1120_1_full` evaluated on the same holdout at 224 to 384 px, with interpolated position embeddings. The 224 px result must match its own holdout score (73.38%).
+
+It takes about 30 minutes on an A100. It has no walkthrough.
+
+Results (batch `1105_0141`):
+
+- Backbone version: `augreg_in21k` gets 49.96% zero-shot and 61.05% with a linear probe; `orig_in21k` gets 42.43% and 51.07%. Ours gets 43.95% and 61.94%. The linear probe is the better test of the features, and neither checkpoint beats ours there, so the backbone version does not explain the gap to the top of the leaderboard.
+- Test resolution: `1019_1120_1_full` gets 73.38%, 75.21%, **75.50%**, 75.28%, 74.33% and 72.94% at 224, 256, 288, 320, 352 and 384 px. With no extra training, a larger test size helps up to 288 px (+2.13 points).
+
+## Training at 288 px after the deadline: `09_full_288.ipynb`
+
+Full fine-tuning as in 01, but trained and tested with larger images (`dynamic_img_size=True`). It is for the report, and for choosing the test size of `cs604_vit_288.ipynb`. It reads no val or test data and writes no submission files.
+
+- By default it runs only run 1: all 3 epochs at 288 px. Run 2 (2 epochs at 224 px, then 1 at 288 px) is optional and commented out in `EXPERIMENTS`.
+- After training, each run is tested on the holdout at 224 to 448 px, with latency and throughput at each size. It is compared with `1019_1120_1_full` at the same size (75.50% at 288 px).
+- Estimated cost on an A100: about 0.7 GPU-hours for run 1 (0.55 for run 2) and about 30 GB of memory. The whole notebook takes about 1 hour with run 1 only. It has no walkthrough.
+- `cs604_vit_288.ipynb` in the project root trains the final model's recipe at 288 px in all 8 epochs (run `1105_1032_1_full_288`, 1.61 GPU-hours, over the 1.2-hour constraint) and predicts at `TEST_SIZE`. It was prepared for one unranked test submission that the TA allowed, but the submission could not be made, so this model has no test score. Run 1 here (best test size 320 px) chose its `TEST_SIZE`.
+
+## Head learning rate for LoRA after the deadline: `10_lora_head_lr.ipynb`
+
+LoRA as in 03, plus one setting, `HEAD_LR`, the learning rate of the 10,000-class head (the LoRA matrices keep `LR`). It tests why LoRA gets worse from 3 to 6 epochs (71.98% → 71.52%) while full fine-tuning keeps improving. It reads no val or test data and writes no submission files.
+
+- Hypothesis: the head memorizes. It is 7.69M of LoRA's 8.87M trainable parameters, and 03 trains it at LR 1e-3 with weight decay 1e-4 and no drop path. Full fine-tuning trains its head at 1e-4 with weight decay 0.05 and drop path 0.1.
+- Run 1, the main test: 6 epochs with `HEAD_LR = 1e-4`, against 71.52% (`1019_1120_2_lora`). Run 2: 3 epochs with `HEAD_LR = 1e-4`, against 71.98% (`1019_1319_3_lora`).
+- The results table shows each run next to the earlier run of the same length with the head at 1e-3, and the holdout after every epoch. One line reads run 1 against the hypothesis; differences below 0.3 points count as noise.
+- Estimated cost on an A100: about 1.0 GPU-hour for run 1 and 0.55 for run 2. It has no walkthrough; everything except `HEAD_LR` is explained in `03_lora_walkthrough.md`.
+
 ## What was removed
 
 Each notebook keeps only the code that its default experiments use. These general features are only in the main notebook:

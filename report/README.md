@@ -1,6 +1,6 @@
 # CS604 期末报告（CVPR 2026 LaTeX 模板）
 
-报告基于 CVPR 2026 官方作者模板（[cvpr-org/author-kit](https://github.com/cvpr-org/author-kit)，tag `CVPR2026-v1(latex)`），用的是正式版（camera-ready）版式：不显示审稿行号，显示作者，带页码。编译好的 PDF 是同目录下的 `main.pdf`（11 页：正文约 7.5 页，参考文献约 1.5 页，附录 2 页）。
+报告基于 CVPR 2026 官方作者模板（[cvpr-org/author-kit](https://github.com/cvpr-org/author-kit)，tag `CVPR2026-v1(latex)`），用的是正式版（camera-ready）版式：不显示审稿行号，显示作者，带页码。编译好的 PDF 是同目录下的 `main.pdf`（13 页：正文 8 页，参考文献 1 页，附录 4 页）。2026-11-08 全文改成了最直白的英文写法。
 
 ## 在 Overleaf 上编译
 
@@ -33,12 +33,10 @@ pdflatex main
 
 | 位置 | 内容 |
 |---|---|
-| `main.tex` 作者栏 | 组员姓名和学号（3 个占位，按实际人数增减）、邮箱 |
-| `sec/4_experiments.tex` 表 3（Main results）的 Test 列 | Phase 2 测试集成绩：最终全量微调模型和最终 PEFT 模型，共 2 处 `TBD` |
-| `sec/4_experiments.tex` 第 4.3 节末尾 | 提醒：补上测试集成绩 |
-| `sec/5_conclusion.tex` 末尾 | 提醒：补上测试集成绩；核对课程的页数要求（CVPR 的上限是正文 8 页，不含参考文献） |
+| `main.tex` 作者栏 | 4 位组员的姓名和学号、邮箱 |
+| `sec/5_conclusion.tex` 末尾 | 提醒：核对课程的页数要求（CVPR 的上限是正文 8 页，不含参考文献） |
 
-全部填完后，把 `preamble.tex` 里的 `% \renewcommand{\todo}[1]{#1}` 取消注释，残留的红字就会变回正常颜色。另外记得删掉那两句提醒。
+测试集成绩（表 3 的 Test 列）已经填好：全量微调 76.09%，LoRA 71.67%。全部填完后，把 `preamble.tex` 里的 `% \renewcommand{\todo}[1]{#1}` 取消注释，残留的红字就会变回正常颜色。另外记得删掉结论末尾那句页数提醒。
 
 ## 文件
 

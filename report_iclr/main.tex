@@ -1,0 +1,74 @@
+% CS604 final report (Team 06), written with the ICLR 2026 template (iclr2026_conference.sty).
+% Compile: pdflatex -> bibtex -> pdflatex -> pdflatex (Overleaf), or locally: tectonic -X compile main.tex
+% Page limit (course): main text at most 10 pages; references and the appendix follow it.
+
+\documentclass{article} % For LaTeX2e
+\PassOptionsToPackage{dvipsnames}{xcolor}
+\usepackage{iclr2026_conference,times}
+
+% XeLaTeX (e.g. tectonic) ignores the Type 1 Times fonts of the times package, so use the TeX Gyre clones
+% (same metrics as Times/Helvetica/Courier). pdfLaTeX, as on Overleaf, skips this and keeps the template's fonts.
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+  \setmainfont{texgyretermes}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+  \setsansfont{texgyreheros}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+  \setmonofont{texgyrecursor}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+\fi
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,multirow,tabularx}
+\usepackage{float}  % [H] keeps the appendix tables under their headings
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[shortlabels,inline]{enumitem}
+\usepackage{microtype}
+\usepackage[capitalize]{cleveref}
+\definecolor{linkblue}{rgb}{0.16,0.40,0.69}
+\hypersetup{colorlinks=true,allcolors=linkblue}
+\usepackage{xspace}
+
+% Short forms used in the text
+\makeatletter
+\DeclareRobustCommand\onedot{\futurelet\@let@token\@onedot}
+\def\@onedot{\ifx\@let@token.\else.\null\fi\xspace}
+\makeatother
+\def\ie{\emph{i.e}\onedot} \def\eg{\emph{e.g}\onedot} \def\vs{\emph{vs}\onedot}
+\newcommand{\todo}[1]{{\color{red}#1}}          % placeholders still to fill in
+% \renewcommand{\todo}[1]{#1}                  % uncomment when all placeholders are filled
+\newcommand{\run}[1]{\texttt{#1}}               % run identifiers (escape underscores as \_)
+\newcommand{\minus}{\ensuremath{-}}
+
+\title{Prototype-Initialized Adaptation of ViT-B/16 for 10,000-Class Fine-Grained Classification under a Fixed Compute Budget}
+
+\author{\todo{Member 1}, \todo{Member 2}, \todo{Member 3} \& \todo{Member 4} \\
+CS604 Team 06, Singapore Management University \\
+\texttt{\todo{\{email addresses\}}}
+}
+
+\iclrfinalcopy % show the author names (course report, not an anonymous submission)
+
+\begin{document}
+
+\maketitle
+% The template's final-copy header says "Published as a conference paper at ICLR 2026"; this is a course report.
+\lhead{CS604 Project Report, Team 06}
+
+\input{sec/0_abstract}
+\input{sec/1_intro}
+\input{sec/2_related}
+\input{sec/3_method}
+\input{sec/4_experiments}
+\input{sec/5_conclusion}
+
+\bibliography{refs}
+\bibliographystyle{iclr2026_conference}
+
+\input{sec/X_appendix}
+
+\end{document}

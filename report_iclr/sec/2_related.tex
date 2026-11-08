@@ -1,0 +1,50 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Pretrained ViTs and fine-tuning.}
+ViT \citep{dosovitskiy2021vit} applies a Transformer \citep{vaswani2017attention} to $16 \times 16$ image patches.
+Pretraining on ImageNet-21k \citep{deng2009imagenet} with strong augmentation and regularization (AugReg, \citealp{steiner2022augreg}) gives backbones that transfer well, and models that are better on ImageNet also transfer better \citep{kornblith2019better}.
+Common fine-tuning recipes use AdamW \citep{loshchilov2019adamw}, warmup with cosine decay \citep{loshchilov2017sgdr}, label smoothing \citep{szegedy2016rethinking}, stochastic depth \citep{huang2016stochastic} and layer-wise learning-rate decay \citep{bao2022beit}; our full fine-tuning recipe uses all of them.
+
+\paragraph{Parameter-efficient fine-tuning (PEFT).}
+PEFT methods train only a small part of the model.
+The oldest option is to train only the top layers, whose features are the most task-specific \citep{yosinski2014transferable}.
+BitFit \citep{benzaken2022bitfit} trains only the bias terms.
+Adapters \citep{houlsby2019adapter} add a small bottleneck MLP to every block, and AdaptFormer \citep{chen2022adaptformer} puts a scaled bottleneck next to the MLP instead of after it.
+LoRA \citep{hu2022lora} learns a low-rank update $\Delta W = BA$ of frozen weight matrices, which can be merged into the weights after training.
+VPT \citep{jia2022vpt} and prefix tuning \citep{li2021prefix} add learnable tokens instead.
+\Cref{tab:related} lists the pros and cons we expected from the literature.
+No method is best on every count: they trade accuracy against training memory, stored size and inference latency, so we measure all of these.
+
+\paragraph{Starting the classifier head.}
+When a pretrained model is moved to new classes, its head is replaced; ViT starts the new head at zero \citep{dosovitskiy2021vit}.
+LP-FT \citep{kumar2022lpft} argues that a random head distorts the pretrained features during fine-tuning, which hurts accuracy on new domains.
+It therefore first trains a linear probe on frozen features and then fine-tunes everything.
+Prototypical networks \citep{snell2017prototypical} represent each class by the mean feature of its examples, and weight imprinting \citep{qi2018imprinted} copies normalized class means directly into the weights of a cosine classifier, to add new classes from a few examples.
+We use imprinting as the starting head for full fine-tuning and PEFT, and compare it with LP-FT in a setting with many classes (10,000), few images per class (45) and a short budget.
+
+\begin{table}[t]
+  \caption{\textbf{Adaptation methods and head starts: pros and cons}, as expected from the literature. Our measured numbers are in \cref{sec:experiments}.}
+  \label{tab:related}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}l>{\raggedright}X>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    Approach & Pros & Cons \\
+    \midrule
+    Full fine-tuning & most accurate with enough data & most memory; a full model copy per task \\
+    Linear probe & cheapest; no backbone gradients & the features never adapt \\
+    Top-$K$ blocks & little memory (short backward pass) & the lower blocks never adapt \\
+    BitFit & tiny; no extra latency & little capacity \\
+    Adapter & small; flexible & extra layers slow down inference \\
+    AdaptFormer & small; keeps the MLP output & cannot be merged; slower inference \\
+    LoRA & small; merged after training, no extra latency & gradients still pass through every block \\
+    VPT, prefix tuning & very small & longer input, so slower; needs tuning of the token count \\
+    \midrule
+    Random or zero head & simple & large, noisy gradients at the start \\
+    LP-FT head & protects the pretrained features & fitted on the training images (hurts here, \cref{sec:ablation-head}) \\
+    Imprinted prototypes & no training; uses the class structure & only as good as the frozen features \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

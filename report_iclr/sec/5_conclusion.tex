@@ -1,0 +1,16 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+When adapting ViT-B/16 to 10,000 classes with 45 images each, the biggest gain came from how we started the new head, not from the adaptation method: class prototypes instead of a linear probe added 2.1--3.1 points, and gave 76.09\% (full fine-tuning) and 71.67\% (LoRA, 1.375\% of the backbone) on the test set.
+Across seven methods, small changes in every block gave more accuracy per parameter than fine-tuning whole top blocks, with 12--69$\times$ fewer parameters, and training memory followed how far back the gradients go.
+
+\paragraph{What we learned.}
+First, failed ideas helped: halving LoRA's learning rate changed nothing, which pointed us from the optimizer to the head, and training LoRA longer lowered its training loss but also its accuracy, which showed that memorization, not underfitting, limits it.
+Second, a good start can be misleading: the linear-probe head starts 18 points ahead and ends 2.5 points behind, so we judged every choice on held-out data after training, never on the training loss or the starting accuracy.
+Third, we studied the adaptation method early and the input late: after the deadline, larger input images added 4.4 holdout points (\cref{sec:post}), more than any single adaptation choice.
+
+\paragraph{Limitations and next steps.}
+Each setting was trained once (seed 0), and the holdout noise is about $\pm$0.3 points, so small differences, such as the 0.26-point gain from two extra images per class, are uncertain.
+Our explanation of why the linear-probe head hurts fits the loss curves and the random-head control, but it is not a full proof.
+The efficient methods share one learning rate that we did not tune per method, we only used LoRA rank 8, and some pairs (partial $K = 1, 2$ \vs $4, 6$; Adapter \vs AdaptFormer) differ in more than one setting.
+Next, we would trade epochs for image size within the budget (\eg 6 epochs at 224 pixels and 2 at 288, about 1.2 GPU-hours by our estimate), test a lower head learning rate for LoRA, and try prompt-based methods.

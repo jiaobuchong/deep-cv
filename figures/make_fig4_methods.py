@@ -2,7 +2,7 @@
 """Figure 4: holdout accuracy and peak training memory against trainable parameters, for every adaptation method
 under the shared protocol (prototype head, 3 epochs, 20,000-image holdout, A100-80GB, bf16).
 
-Writes figures/fig4_methods_params.png (slides) and report/figures/fig4_methods_params.pdf (report).
+Writes figures/fig4_methods_params.png (slides) and report_iclr/figures/fig4_methods_params.pdf (report).
 Numbers are copied from each run's summary.json (run names in the comments)."""
 import os
 
@@ -99,7 +99,7 @@ def main():
     fig.tight_layout(rect=(0, 0.07, 1, 1), w_pad=2.5)
 
     png = os.path.join(HERE, "fig4_methods_params.png")
-    pdf = os.path.join(ROOT, "report", "figures", "fig4_methods_params.pdf")
+    pdf = os.path.join(ROOT, "report_iclr", "figures", "fig4_methods_params.pdf")
     fig.savefig(png, facecolor=BG)
     fig.savefig(pdf, facecolor=BG)
     print("wrote", png, "and", pdf)

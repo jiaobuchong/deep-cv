@@ -1,6 +1,6 @@
 # CS604 期末报告（ICLR 2026 模板）
 
-这是按课程要求改用 ICLR 2026 模板（`/Users/jaxson/Downloads/iclr2026`）的版本，也是要提交的版本。旧的 CVPR 版本还在 `../report/`，只作备份。
+这是按课程要求改用 ICLR 2026 模板（`/Users/jaxson/Downloads/iclr2026`）的版本，也是要提交的版本。旧的 CVPR 版本还在 `../report_cvpr/`，只作备份。
 
 编译好的 PDF 是 `main.pdf`，共 15 页：
 - 正文：第 1–10 页（第 10 页中间结束），符合"正文不超过 10 页"
@@ -21,7 +21,7 @@
 | `sec/X_appendix.tex` | 附录（放在参考文献后面） |
 | `figures/fig_pipeline.pdf` | 新画的流程图，蓝色 + "OURS" 标出我们的改进；生成脚本 `../figures/make_pipeline_iclr.py` |
 | `figures/data_examples_wide.jpg` | 训练样例图（4 个类，每类 4 张）；生成脚本 `../figures/make_data_examples_wide.py`，需要本地的 `cs604-course-data/train` |
-| 其他 `figures/*` | 从 `../report/figures/` 复制来的图 |
+| 其他 `figures/*` | 从 `../report_cvpr/figures/` 复制来的图 |
 | `iclr2026_conference.sty/.bst`, `fancyhdr.sty`, `natbib.sty`, `math_commands.tex` | 模板文件，未改动 |
 
 ## 对照课程要求

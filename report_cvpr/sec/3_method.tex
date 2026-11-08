@@ -1,0 +1,137 @@
+\section{Method}
+\label{sec:method}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig0_framework.pdf}
+  \caption{\textbf{Overview of our pipeline.}
+  A ViT-B/16 backbone is adapted either by full fine-tuning or by LoRA on every linear layer (blue modules: qkv, proj, fc1, fc2 in all 12 blocks).
+  Before training, the 10,000-class head is set to the L2-normalized class-mean features (prototypes), scaled by a temperature $\tau$.
+  At test time, the logits of the image and of its horizontal flip are added.
+  All runs use AdamW with warmup and cosine decay, bf16 and batch size 256, within a budget of 96\,GB$\cdot$h (1.2\,h on one A100-80GB).}
+  \label{fig:framework}
+\end{figure*}
+
+\Cref{fig:framework} shows the pipeline.
+Let $f_\theta$ map an image $x$ to its final-layer \texttt{[CLS]} feature $z = f_\theta(x) \in \mathbb{R}^{768}$, and let $h(z) = Wz + b$ with $W \in \mathbb{R}^{10000 \times 768}$ be the new classifier head.
+
+\subsection{Backbone, budget and full fine-tuning}
+\label{sec:budget}
+
+\paragraph{Backbone.}
+We use the timm~\cite{wightman2019timm} checkpoint \nolinkurl{vit_base_patch16_224.augreg2_in21k_ft_in1k}, the backbone that the project description recommends, and keep it in every experiment.
+It is ViT-B/16 pretrained on ImageNet-21k with AugReg~\cite{steiner2022augreg} and fine-tuned on ImageNet-1k.
+The backbone has 85,798,656 parameters; we replace its 1,000-class head with a new 10,000-class head of 7,690,000 parameters.
+The project description also lists ViT-B/16 models trained only on ImageNet-21k.
+After the deadline we tested two of them with frozen features on our holdout (prototype head without training / linear probe): \nolinkurl{augreg_in21k} reaches 49.96 / 61.05\% and \nolinkurl{orig_in21k}, the original Google checkpoint, 42.43 / 51.07\%, against 43.95 / 61.94\% for our backbone.
+Neither is better after a linear probe, so switching would not have helped.
+
+\paragraph{Compute budget.}
+The project allows 2\,h$\times$48\,GB $=$ 96\,GB$\cdot$h per training run ($\pm$10\%).
+On our 80\,GB A100 this is 1.2 hours.
+Our clock counts all GPU work for training: head initialization (including feature extraction), all optimizer steps, and the holdout check after every epoch.
+It does not count unpacking the data, saving checkpoints or making the final predictions.
+Our code times training steps 20--120; if the planned epochs would use more than 97\% of the budget, it shortens the cosine schedule, and it stops training at 1.05$\times$ the budget.
+Every run in our results finished within 1.06 GPU-hours; the only longer run is one post-deadline test that is not part of our results (\cref{sec:post}).
+
+\paragraph{Full fine-tuning.}
+All backbone and head weights are trained with AdamW~\cite{loshchilov2019adamw} at learning rate $10^{-4}$ and weight decay 0.05 (none on biases, normalization parameters, the class token and position embeddings).
+We use layer-wise learning-rate decay of 0.75~\cite{bao2022beit} and drop path 0.1~\cite{huang2016stochastic}.
+The learning rate warms up linearly (one epoch for runs of 6 or more epochs, 0.3 epochs for 3-epoch runs) and then follows a cosine decay to zero~\cite{loshchilov2017sgdr}.
+Other settings are batch size 256, bf16 mixed precision, gradient clipping at norm 1, and label smoothing 0.1~\cite{szegedy2016rethinking}.
+Training augmentation is RandomResizedCrop (scale 0.25--1) plus horizontal flip.
+For evaluation, images are resized to 248 pixels and center-cropped to 224.
+
+\subsection{Parameter-efficient and partial adaptation}
+\label{sec:peft}
+
+\paragraph{LoRA.}
+For a frozen linear layer $W_0 \in \mathbb{R}^{d_\text{out} \times d_\text{in}}$, LoRA~\cite{hu2022lora} computes
+\begin{equation}
+  y = W_0 x + \tfrac{\alpha}{r} B A x,
+  \label{eq:lora}
+\end{equation}
+where $A \in \mathbb{R}^{r \times d_\text{in}}$ and $B \in \mathbb{R}^{d_\text{out} \times r}$ are trained.
+$B$ starts at zero, so training starts exactly from the pretrained model.
+We use $r = 8$ and $\alpha = 16$.
+timm joins the query, key and value projections into one \texttt{qkv} layer.
+So LoRA on \texttt{qkv} adapts all three, with the same parameter count (294,912, 0.344\% of the backbone) as LoRA on separate query and value layers.
+Our final LoRA model applies LoRA to all four linear layers of every block (\texttt{qkv}, \texttt{proj}, \texttt{fc1}, \texttt{fc2}), for 1,179,648 parameters (1.375\%).
+The LoRA weights and the head use learning rate $10^{-3}$ and weight decay $10^{-4}$, with no LoRA dropout.
+After training, $\tfrac{\alpha}{r}BA$ is added into $W_0$, so inference uses exactly the base model.
+
+\paragraph{AdaptFormer.}
+Following~\cite{chen2022adaptformer}, each block gets a bottleneck branch next to its MLP:
+\begin{equation}
+  x_{l+1} = x' + \mathrm{MLP}(\mathrm{LN}(x')) + s \cdot W_\text{up}\,\mathrm{ReLU}(W_\text{down} x'),
+  \label{eq:adaptformer}
+\end{equation}
+where $x'$ is the output of the attention sub-block.
+We use bottleneck width 64, scale $s = 0.1$, dropout 0.1 and a zero-initialized $W_\text{up}$, for 1,189,632 parameters (1.387\%).
+Unlike LoRA, the branch cannot be merged into the backbone.
+
+\paragraph{Adapter, BitFit and partial fine-tuning.}
+For the comparison in \cref{sec:compare} we add three more methods.
+The serial Adapter~\cite{houlsby2019adapter} applies the same bottleneck to the MLP output, $h + W_\text{up}\,\mathrm{ReLU}(W_\text{down} h)$ with $h = \mathrm{MLP}(\mathrm{LN}(x'))$, before the residual addition and without a scale.
+BitFit~\cite{benzaken2022bitfit} trains only the bias vectors of all linear and normalization layers.
+Partial fine-tuning trains the last $K$ blocks and the final normalization layer and freezes everything below them; one block has 7,087,872 parameters (8.26\% of the backbone).
+\Cref{tab:params} gives the trainable parameters of every method.
+
+\begin{table}[t]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}llrr@{}}
+    \toprule
+    Method & Count & Parameters & \% \\
+    \midrule
+    Partial, last $K$ blocks & $7{,}087{,}872\,K + 1{,}536$ & 7.09M--42.5M & 8.26--49.6 \\
+    Full fine-tuning & all & 85,798,656 & 100 \\
+    BitFit & $12 \cdot 8{,}448 + 1{,}536$ & 102,912 & 0.120 \\
+    Adapter, AdaptFormer & $12 \cdot 99{,}136$ & 1,189,632 & 1.387 \\
+    LoRA, qkv only & $12 \cdot 3{,}072\,r$ & 294,912 & 0.344 \\
+    LoRA, all linear & $12 \cdot 12{,}288\,r$ & 1,179,648 & 1.375 \\
+    \bottomrule
+  \end{tabular}
+  \caption{\textbf{Trainable backbone parameters} (head excluded; $r = 8$; partial: $K \in \{1, 2, 4, 6\}$).
+  1,536: final LayerNorm (partial) or the patch-embedding and final-norm biases (BitFit); 8,448 biases per block.
+  Adapter: $2 \cdot 768 \cdot 64 + 64 + 768 = 99{,}136$ per block.
+  LoRA adds $r\,(d_\text{in} + d_\text{out})$ per layer, \ie $3{,}072\,r$ for qkv and $12{,}288\,r$ for qkv, proj, fc1 and fc2 together.}
+  \label{tab:params}
+\end{table}
+
+In all runs except the zero-shot baseline the head is also trained.
+The head alone has 7.69M parameters, so we report trainable parameters both without it (as in the project's 0.34\% LoRA reference) and with it.
+
+\subsection{Starting the 10,000-class head}
+\label{sec:head-init}
+
+The head is the largest new part of the model, and each of its rows is trained on at most 45 images.
+A random head gives almost uniform logits (initial loss $\approx \ln 10000 = 9.2$), so early in training the backbone gets large, noisy gradients from it.
+We compare three ways to start the head.
+
+\paragraph{Random.} timm's default initialization of a new linear layer.
+
+\paragraph{Prototype (imprinted) head.}
+With the frozen pretrained backbone, we extract the features $z_i$ of all training images once.
+We then copy the L2-normalized class means into the head~\cite{snell2017prototypical,qi2018imprinted}:
+\begin{equation}
+  \mu_c = \frac{\sum_{i:\,y_i=c} \hat z_i}{\big\|\sum_{i:\,y_i=c} \hat z_i\big\|}, \quad
+  W_c = \frac{\tau}{\overline{\|z\|}}\, \mu_c, \quad b_c = 0,
+  \label{eq:proto}
+\end{equation}
+where $\hat z_i = z_i / \|z_i\|$ and $\overline{\|z\|}$ is the mean feature norm, so each logit is about $\tau \cos(z, \mu_c)$.
+We pick the temperature $\tau$ from $\{5, 10, 15, 20, 30, 40, 60, 80\}$ by the cross-entropy on 10,000 training features, which gives $\tau = 40$.
+Without any training, this head already reaches 44.0\% holdout accuracy.
+Feature extraction takes 6--7 minutes on an A100, and we count this time in every run's GPU-hours.
+
+\paragraph{Linear-probe (LP) head.}
+Starting from the prototype head, we train $(W, b)$ on the cached frozen features for 10 epochs.
+We use AdamW (learning rate $10^{-3}$, weight decay $10^{-4}$), batch size 4,096, cosine decay and label smoothing 0.1.
+This reaches 62.1\% holdout accuracy in a few seconds and is the first stage of LP-FT~\cite{kumar2022lpft}.
+It was our first design, chosen so that a random head would not distort the features.
+\Cref{sec:ablation-head} shows that it is the worst of the three.
+
+\subsection{Test-time augmentation}
+As is common~\cite{krizhevsky2012imagenet}, we add the logits of an image and of its horizontal flip.
+This doubles the inference cost, and we use it only where stated.

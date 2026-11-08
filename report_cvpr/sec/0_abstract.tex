@@ -1,0 +1,13 @@
+\begin{abstract}
+We adapt ViT-B/16 (pretrained on ImageNet-21k, fine-tuned on ImageNet-1k) to a fine-grained dataset with 10,000 classes and only 45 training images per class.
+Each training run may use 2 hours on 48\,GB of GPU memory.
+We compare seven ways to adapt the model under the same settings: a linear probe, fine-tuning the last few blocks, full fine-tuning, BitFit, Adapter, AdaptFormer and LoRA.
+The choice that mattered most was how to start the new 10,000-class head.
+The usual start, a linear probe trained on frozen features of the training images, made all three methods we tested worse.
+Starting the head from the mean feature of each class (a prototype) raised holdout accuracy by 2.1--2.5 points for full fine-tuning, LoRA and AdaptFormer, and raised the validation accuracy of our final model by 3.1 points.
+We also find that where the trainable parameters are matters more than how many there are: LoRA on 1.375\% of the backbone is as accurate as fine-tuning the last four blocks (33\%).
+Training memory depends on how far back the gradients go, not on how many parameters are trained.
+Our final full fine-tuning model, trained on all images and tested with horizontal flips, reaches 76.22\% top-1 on the CodaBench validation set (reference: 70.8\%) and 76.09\% on the test set, in 1.03 GPU-hours on one A100.
+Our final LoRA model trains 1.375\% of the backbone and reaches 71.90\% on validation (reference LoRA: 68.3\%) and 71.67\% on test; after training it is merged into the weights, so it does not slow down inference.
+We also report the ideas that did not work, and show after the deadline that larger input images add another 4.4 points on our holdout.
+\end{abstract}

@@ -1,0 +1,24 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We adapted ViT-B/16 to a 10,000-class fine-grained dataset with 45 images per class, with a budget of 96\,GB$\cdot$h per run.
+The biggest gain came from how we started the new head, not from the adaptation method.
+Starting the head from class prototypes instead of a linear probe trained on the training features added 2.1--3.1 points for full fine-tuning, LoRA and AdaptFormer.
+With this head, full fine-tuning reaches 76.22\% on validation and 76.09\% on test in 1.03 GPU-hours, and LoRA on all linear layers reaches 71.90\% and 71.67\% with 1.375\% of the backbone and no extra inference cost after merging.
+In our comparison of seven methods, small changes in every block gave more accuracy per parameter than fine-tuning whole top blocks, with 12--69$\times$ fewer parameters.
+LoRA worked best on all linear layers and with a short schedule of about 3 epochs, and unlike the two adapters it can be merged.
+Training memory depends on how far back the gradients go: fine-tuning only the top blocks is the cheapest to train, while spreading a few parameters over all blocks gives the most accuracy per parameter.
+
+\paragraph{Lessons from the process.}
+First, failed ideas helped: halving LoRA's learning rate changed nothing, which pointed us from the optimizer to the head, and training LoRA longer lowered its training loss but also its accuracy, which showed that memorization, not underfitting, limits it.
+Second, a good start can be misleading: the linear-probe head starts 18 points ahead and ends 2.5 points behind, so we judged every choice on held-out data after training, never on the training loss or the starting accuracy.
+Third, we studied the adaptation method early and the input late: after the deadline, larger input images added 4.4 holdout points (\cref{sec:post}), more than any single adaptation choice, while the recommended backbone did as well as the ImageNet-21k-only models (\cref{sec:budget}).
+
+\paragraph{Limitations and next steps.}
+Each setting was trained once (seed 0), and the holdout noise is about $\pm$0.3 points, so small differences, such as the 0.26-point gain from two extra images per class, are uncertain.
+Our explanation of why the linear-probe head hurts fits the loss curves and the random-head control, but it is not a full proof.
+The efficient methods share one learning rate that we did not tune per method, and we only used LoRA rank 8.
+Partial fine-tuning with $K = 4, 6$ uses a different recipe from $K = 1, 2$, and the Adapter and AdaptFormer also differ in scale, so these comparisons change more than one thing at a time.
+We did not try prompt-based methods such as VPT~\cite{jia2022vpt} or prefix tuning~\cite{li2021prefix}.
+Next, we would trade epochs for image size within the budget, for example 6 epochs at 224 pixels and 2 at 288 (about 1.2 GPU-hours by our estimate), and test whether a lower head learning rate lets LoRA train longer.
+% TODO: check the course page limit (the CVPR limit is 8 pages excluding references); the body now ends on page 8.
